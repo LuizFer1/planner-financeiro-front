@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint (if available)
+      run: npm run lint --if-present
+      continue-on-error: true
+
+    - name: Build (Development)
+      run: npm run build:dev
+
+    - name: Run tests
+      run: npm test --if-present
+      continue-on-error: true
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Build for Production
+      run: npm run build
+      env:
+        NODE_ENV: production
+    
+    - name: FTP Deploy (LFTP)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lftp
+        lftp -c "set ftp:ssl-allow true; set ssl:verify-certificate no; set ftp:ssl-protect-data true; open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; mirror -R -v --parallel=4 --exclude .git/ --exclude .git* --exclude node_modules/ --exclude src/ --exclude angular.json --exclude package.json --exclude package-lock.json --exclude tsconfig.json --exclude .env --exclude .env.example --exclude README.md --exclude DEPLOY.md dist/planner-financeiro-front/browser/ ${{ secrets.FTP_DEPLOY_PATH }}/"

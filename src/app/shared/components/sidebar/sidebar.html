@@ -1,0 +1,36 @@
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <img src="/assets/Logo/logo.png" alt="Planeja+" class="logo-sidebar">
+  </div>
+
+  <nav class="sidebar-nav">
+    <a routerLink="/dashboard" class="nav-item" routerLinkActive="active">
+      <i class="fa-solid fa-chart-line nav-icon"></i>
+      <span class="nav-text">Dashboard</span>
+    </a>
+    <a routerLink="/movimentacoes" class="nav-item" routerLinkActive="active">
+      <i class="fa-solid fa-money-bill-transfer nav-icon"></i>
+      <span class="nav-text">Movimentações</span>
+    </a>
+    <a routerLink="/investimentos" class="nav-item" routerLinkActive="active">
+      <i class="fa-solid fa-chart-pie nav-icon"></i>
+      <span class="nav-text">Investimentos</span>
+    </a>
+    <a routerLink="/mercado" class="nav-item" routerLinkActive="active">
+        <i class="fa-solid fa-money-bill-trend-up nav-icon"></i>
+      <span class="nav-text">Mercado</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="sidebar-action-btn" (click)="openSettings()" title="Configurações">
+      <i class="fa-solid fa-gear"></i>
+    </button>
+    <button class="sidebar-action-btn" (click)="openNotifications()" title="Notificações">
+      <i class="fa-solid fa-bell"></i>
+    </button>
+    <button class="logout-btn" (click)="logout()" title="Sair">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    </button>
+  </div>
+</aside>

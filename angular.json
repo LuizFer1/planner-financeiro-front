@@ -22,6 +22,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": ".htaccess",
+                "input": ".",
+                "output": "/"
               }
             ],
             "styles": [
@@ -30,6 +35,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",

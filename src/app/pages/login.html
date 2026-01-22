@@ -1,0 +1,87 @@
+<div class="login-container">
+  <!-- Lado Esquerdo - Formulário -->
+  <div class="login-form-section">
+    <div class="form-wrapper">
+      <div class="logo-section">
+        <img src="/assets/Logo/logo-planeja+.png" alt="Planeja+ - Gerencie suas finanças" class="logo-img">
+      </div>
+
+      <div class="login-header">
+        <h2>Entre com a sua conta</h2>
+        <p>Digite seu e-mail e senha para acessar</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            [class.is-invalid]="submitted && f['email'].errors"
+            placeholder="Digite seu e-mail"
+          />
+          <div class="invalid-feedback" *ngIf="submitted && f['email'].errors">
+            <span *ngIf="f['email'].errors['required']">E-mail é obrigatório</span>
+            <span *ngIf="f['email'].errors['email']">E-mail inválido</span>
+          </div>
+        </div>
+
+        <!-- Senha -->
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            class="form-control"
+            [class.is-invalid]="submitted && f['password'].errors"
+            placeholder="Digite sua senha"
+          />
+          <div class="invalid-feedback" *ngIf="submitted && f['password'].errors">
+            <span *ngIf="f['password'].errors['required']">Senha é obrigatória</span>
+            <span *ngIf="f['password'].errors['minlength']">Senha deve ter no mínimo 6 caracteres</span>
+          </div>
+        </div>
+
+        <!-- Link Esqueceu senha -->
+        <div class="forgot-password">
+          <a routerLink="/forgot-password">Esqueceu sua senha? <span>Recupere a sua senha</span></a>
+        </div>
+
+        <!-- Mensagem de erro geral -->
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <!-- Botão -->
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading"
+          >
+            <span *ngIf="!loading">Entrar</span>
+            <span *ngIf="loading">Entrando...</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="login-footer">
+        <p>Ainda não possui uma conta? <a routerLink="/register">Crie a sua conta</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lado Direito - Imagem -->
+  <div class="login-image-section">
+    <div class="image-overlay">
+      <div class="image-content">
+        <h2>Revolucione o planejamento<br>das suas finanças!</h2>
+        <p class="brand-text">Planeja+</p>
+      </div>
+    </div>
+  </div>
+</div>
