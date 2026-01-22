@@ -1,0 +1,124 @@
+<div class="register-container">
+  <!-- Lado Esquerdo - Formulário -->
+  <div class="register-form-section">
+    <div class="form-wrapper">
+      <div class="logo-section">
+        <img src="/assets/Logo/logo-planeja+.png" alt="Planeja+ - Gerencie suas finanças" class="logo-img">
+      </div>
+
+      <div class="register-header">
+        <h2>Crie a sua conta</h2>
+        <p>Preencha os dados abaixo para se cadastrar</p>
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <!-- Nome -->
+      <div class="form-group">
+        <label for="name">Nome Completo</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          class="form-control"
+          [class.is-invalid]="submitted && f['name'].errors"
+          placeholder="Digite seu nome completo"
+        />
+        <div class="invalid-feedback" *ngIf="submitted && f['name'].errors">
+          <span *ngIf="f['name'].errors['required']">Nome é obrigatório</span>
+          <span *ngIf="f['name'].errors['minlength']">Nome deve ter no mínimo 3 caracteres</span>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [class.is-invalid]="submitted && f['email'].errors"
+          placeholder="seu@email.com"
+        />
+        <div class="invalid-feedback" *ngIf="submitted && f['email'].errors">
+          <span *ngIf="f['email'].errors['required']">E-mail é obrigatório</span>
+          <span *ngIf="f['email'].errors['email']">E-mail inválido</span>
+        </div>
+      </div>
+
+      <!-- Senha -->
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          [class.is-invalid]="submitted && f['password'].errors"
+          placeholder="Mínimo 6 caracteres"
+        />
+        <div class="invalid-feedback" *ngIf="submitted && f['password'].errors">
+          <span *ngIf="f['password'].errors['required']">Senha é obrigatória</span>
+          <span *ngIf="f['password'].errors['minlength']">Senha deve ter no mínimo 6 caracteres</span>
+        </div>
+      </div>
+
+      <!-- Confirmar Senha -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar Senha</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          class="form-control"
+          [class.is-invalid]="submitted && f['confirmPassword'].errors"
+          placeholder="Digite a senha novamente"
+        />
+        <div class="invalid-feedback" *ngIf="submitted && f['confirmPassword'].errors">
+          <span *ngIf="f['confirmPassword'].errors['required']">Confirmação de senha é obrigatória</span>
+          <span *ngIf="f['confirmPassword'].errors['passwordMismatch']">As senhas não coincidem</span>
+        </div>
+      </div>
+
+      <!-- Mensagem de erro geral -->
+      <div class="alert alert-danger" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Botões -->
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="loading"
+        >
+          <span *ngIf="!loading">Criar Conta</span>
+          <span *ngIf="loading">Criando...</span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onReset()"
+          [disabled]="loading"
+        >
+          Limpar
+        </button>
+      </div>
+      </form>
+
+      <div class="register-footer">
+        <p>Já tem uma conta? <a routerLink="/login">Faça login</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lado Direito - Imagem -->
+  <div class="register-image-section">
+    <div class="image-overlay">
+      <div class="image-content">
+        <h2>Revolucione o planejamento<br>das suas finanças!</h2>
+        <p class="brand-text">Planeja+</p>
+      </div>
+    </div>
+  </div>
+</div>
