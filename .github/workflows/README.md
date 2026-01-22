@@ -15,7 +15,17 @@ Para que o deploy funcione, você precisa configurar os seguintes secrets no Git
 | `FTP_USERNAME` | Usuário FTP | `seu-usuario@dominio.com` |
 | `FTP_PASSWORD` | Senha FTP | `sua-senha-segura` |
 | `FTP_SERVER` | Servidor FTP | `ftp.seudominio.com` |
-| `FTP_DEPLOY_PATH` | Caminho no servidor | `/public_html/app` |
+| `FTP_DEPLOY_PATH` | Caminho no servidor | `/public_html/app` ou `/httpdocs` |
+
+### ⚠️ Importante sobre FTP_DEPLOY_PATH
+- **NÃO** adicione barra no final: ✅ `/public_html/app` ❌ `/public_html/app/`
+- Use o caminho completo a partir da raiz do seu servidor FTP
+- Comum: `/public_html`, `/httpdocs`, `/www`, `/web`
+
+### 🧪 Testar conexão FTP localmente
+```bash
+lftp -u usuario,senha ftp.seudominio.com -e "ls; bye"
+```
 
 ## 📋 Jobs do Workflow
 

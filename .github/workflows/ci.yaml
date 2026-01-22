@@ -56,8 +56,42 @@ jobs:
       env:
         NODE_ENV: production
     
+    - name: Verify FTP Secrets
+      run: |
+        if [ -z "${{ secrets.FTP_USERNAME }}" ] || [ -z "${{ secrets.FTP_PASSWORD }}" ] || [ -z "${{ secrets.FTP_SERVER }}" ] || [ -z "${{ secrets.FTP_DEPLOY_PATH }}" ]; then
+          echo "❌ Error: FTP secrets are not configured!"
+          echo "Please configure FTP_USERNAME, FTP_PASSWORD, FTP_SERVER, and FTP_DEPLOY_PATH in GitHub Secrets"
+          exit 1
+        fi
+        echo "✅ FTP secrets are configured"
+    
+    - name: List Build Files
+      run: |
+        echo "📦 Build files to deploy:"
+        ls -lah dist/planner-financeiro-front/browser/ || echo "Build directory not found!"
+    
     - name: FTP Deploy (LFTP)
       run: |
         sudo apt-get update
         sudo apt-get install -y lftp
-        lftp -c "set ftp:ssl-allow true; set ssl:verify-certificate no; set ftp:ssl-protect-data true; open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; mirror -R -v --parallel=4 --exclude .git/ --exclude .git* --exclude node_modules/ --exclude src/ --exclude angular.json --exclude package.json --exclude package-lock.json --exclude tsconfig.json --exclude .env --exclude .env.example --exclude README.md --exclude DEPLOY.md dist/planner-financeiro-front/browser/ ${{ secrets.FTP_DEPLOY_PATH }}/"
+        
+        echo "🚀 Starting FTP deployment..."
+        echo "Server: ${{ secrets.FTP_SERVER }}"
+        echo "Path: ${{ secrets.FTP_DEPLOY_PATH }}"
+        
+        lftp -e "set ftp:ssl-allow true; \
+                 set ssl:verify-certificate no; \
+                 set ftp:ssl-protect-data true; \
+                 set ftp:passive-mode true; \
+                 open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; \
+                 cd ${{ secrets.FTP_DEPLOY_PATH }} || mkdir -p ${{ secrets.FTP_DEPLOY_PATH }}; \
+                 cd ${{ secrets.FTP_DEPLOY_PATH }}; \
+                 mirror -R -v --parallel=4 \
+                   --exclude .git/ \
+                   --exclude .gitignore \
+                   --exclude node_modules/ \
+                   --exclude src/ \
+                   dist/planner-financeiro-front/browser/ .; \
+                 bye"
+        
+        echo "✅ Deployment completed!"
