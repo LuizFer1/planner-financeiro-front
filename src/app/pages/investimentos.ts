@@ -42,8 +42,6 @@ export class InvestimentosComponent implements OnInit {
 
     investmentService.list()
       .then(response => {
-        console.log('Resposta investimentos:', response);
-        
         this.investments = (response.data || []).map((inv: any) => ({
           uuid: inv.uuid,
           amount: parseFloat(inv.amount || '0'),
@@ -59,13 +57,9 @@ export class InvestimentosComponent implements OnInit {
           profit: 0,
           profitPercent: 0
         }));
-        
-        console.log('Investimentos carregados:', this.investments);
-        console.log('Total investido:', this.totalInvested);
       })
       .catch(error => {
         this.errorMessage = 'Erro ao carregar investimentos';
-        console.error('Erro:', error);
       })
       .finally(() => {
         this.isLoading = false;
@@ -117,7 +111,6 @@ export class InvestimentosComponent implements OnInit {
   }
 
   editInvestment(investment: Transaction) {
-    console.log('Editar investimento:', investment);
     // TODO: Implementar edição em modal separado
   }
 
@@ -130,9 +123,8 @@ export class InvestimentosComponent implements OnInit {
       .then(() => {
         this.loadInvestments();
       })
-      .catch(error => {
+      .catch(() => {
         this.errorMessage = 'Erro ao deletar investimento';
-        console.error('Erro:', error);
       });
   }
 

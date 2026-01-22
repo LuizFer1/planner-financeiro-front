@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { authService } from '../services/Auth';
+import { ToastService } from '../services/Toast';
 
 @Component({
   selector: 'app-login',
@@ -15,11 +16,12 @@ export class LoginComponent {
   loginForm: FormGroup;
   submitted = false;
   loading = false;
-  errorMessage = '';
 
   constructor(
     private formBuilder: FormBuilder,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -28,34 +30,42 @@ export class LoginComponent {
     });
   }
 
-  // Getter para facilitar acesso aos campos do formulário
   get f() {
     return this.loginForm.controls;
   }
 
   onSubmit() {
     this.submitted = true;
-    this.errorMessage = '';
 
-    // Para se o formulário for inválido
     if (this.loginForm.invalid) {
       return;
     }
 
     this.loading = true;
+    console.log('[LOGIN] Iniciando login, loading:', this.loading);
 
-    // Chamada ao serviço de autenticação
-    authService.login(this.loginForm.value)
-      .then(response => {
-        console.log('Login realizado:', response);
-        this.loading = false;
-        // Redirecionar para dashboard após login
-        this.router.navigate(['/dashboard']);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Tempo de requisição excedido. Tente novamente.')), 10000);
+    });
+
+    Promise.race([authService.login(this.loginForm.value), timeoutPromise])
+      .then(() => {
+        console.log('[LOGIN] Login bem-sucedido');
+        this.toastService.success('Login realizado com sucesso!');
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 500);
       })
       .catch(error => {
+        console.log('[LOGIN] Erro no login:', error);
+        const errorMsg = error.message || 'Erro ao fazer login. Verifique suas credenciais.';
+        this.toastService.error(errorMsg);
+      })
+      .finally(() => {
+        // Garante que o loading seja false e força detecção de mudanças
         this.loading = false;
-        this.errorMessage = error.message || 'Erro ao fazer login. Verifique suas credenciais.';
-        console.error('Erro no login:', error);
+        this.cdr.detectChanges();
+        console.log('[LOGIN] Botão reativado, loading:', this.loading);
       });
   }
 }

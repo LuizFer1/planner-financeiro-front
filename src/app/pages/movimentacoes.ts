@@ -36,6 +36,32 @@ export class MovimentacoesComponent implements OnInit {
     private ngZone: NgZone
   ) {}
 
+  formatCurrency(value: number | string): string {
+    // Garante que sempre seja um número válido, mesmo se vier como string
+    // Remove pontos de milhar e troca vírgulas por pontos antes de converter
+    let numValue = 0;
+    
+    if (typeof value === 'string') {
+      // Remove espaços e símbolos de moeda
+      const cleanValue = value.replace(/[^\d,.-]/g, '');
+      // Se tiver vírgula, assume formato BR (1.234,56) e converte para formato US (1234.56)
+      if (cleanValue.includes(',')) {
+        numValue = parseFloat(cleanValue.replace(/\./g, '').replace(',', '.')) || 0;
+      } else {
+        numValue = parseFloat(cleanValue) || 0;
+      }
+    } else {
+      numValue = parseFloat(String(value)) || 0;
+    }
+    
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(numValue);
+  }
+
   ngOnInit(): void {
     this.loadTransactions();
   }
@@ -50,9 +76,6 @@ export class MovimentacoesComponent implements OnInit {
     ])
       .then(([revenuesResponse, expensesResponse]) => {
         this.ngZone.run(() => {
-          console.log('Revenues Response:', revenuesResponse);
-          console.log('Expenses Response:', expensesResponse);
-
           // Verifica se os dados estão no formato correto
           const revenuesData = Array.isArray(revenuesResponse?.data) 
             ? revenuesResponse.data 
@@ -84,14 +107,12 @@ export class MovimentacoesComponent implements OnInit {
             new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
           );
 
-          console.log('Transactions loaded:', this.transactions);
           this.cdr.detectChanges();
         });
       })
       .catch(error => {
         this.ngZone.run(() => {
           this.errorMessage = 'Erro ao carregar movimentações';
-          console.error('Erro:', error);
           this.cdr.detectChanges();
         });
       })
@@ -123,13 +144,13 @@ export class MovimentacoesComponent implements OnInit {
   get totalIncome() {
     return this.transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + parseFloat(String(t.amount || 0)), 0);
   }
 
   get totalExpense() {
     return this.transactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + parseFloat(String(t.amount || 0)), 0);
   }
 
   get balance() {
@@ -145,7 +166,6 @@ export class MovimentacoesComponent implements OnInit {
   }
 
   editTransaction(transaction: DisplayTransaction) {
-    console.log('Editar movimentação:', transaction);
     // TODO: Implementar edição em modal separado
   }
 
@@ -160,9 +180,8 @@ export class MovimentacoesComponent implements OnInit {
       .then(() => {
         this.loadTransactions();
       })
-      .catch(error => {
+      .catch(() => {
         this.errorMessage = 'Erro ao deletar movimentação';
-        console.error('Erro:', error);
       });
   }
 

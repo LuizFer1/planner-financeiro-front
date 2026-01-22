@@ -86,6 +86,9 @@
     <section class="charts-section">
       <div class="chart-card chart-line">
         <div class="chart-header">
+          <h3>Evolução Financeira (Semana)</h3>
+        </div>
+        <div class="chart-header">
           <div class="chart-legend">
             <span class="legend-item">
               <span class="legend-dot" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);"></span>
@@ -98,76 +101,104 @@
           </div>
         </div>
         <div class="chart-content">
-          <div class="chart-placeholder">
-            <svg viewBox="0 0 400 200" class="line-chart">
-              <!-- Grid lines -->
-              <line x1="0" y1="50" x2="400" y2="50" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-              <line x1="0" y1="100" x2="400" y2="100" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-              <line x1="0" y1="150" x2="400" y2="150" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-              <!-- Área de receitas -->
-              <defs>
-                <linearGradient id="areaGradientGreen" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3"/>
-                  <stop offset="100%" style="stop-color:#10b981;stop-opacity:0"/>
-                </linearGradient>
-                <linearGradient id="areaGradientRed" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.3"/>
-                  <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0"/>
-                </linearGradient>
-              </defs>
-              <!-- Linhas do gráfico -->
-              <polyline
-                points="0,150 50,120 100,130 150,100 200,110 250,80 300,90 350,60 400,70"
-                fill="none"
-                stroke="#ef4444"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+          <svg viewBox="0 0 160 90" class="bar-chart" preserveAspectRatio="xMidYMid meet">
+            <!-- Grid lines -->
+            <line x1="12" y1="15" x2="155" y2="15" stroke="#e2e8f0" stroke-width="0.3" stroke-dasharray="1"/>
+            <line x1="12" y1="35" x2="155" y2="35" stroke="#e2e8f0" stroke-width="0.3" stroke-dasharray="1"/>
+            <line x1="12" y1="55" x2="155" y2="55" stroke="#e2e8f0" stroke-width="0.3" stroke-dasharray="1"/>
+            <line x1="12" y1="75" x2="155" y2="75" stroke="#e2e8f0" stroke-width="0.3" stroke-dasharray="1"/>
+            
+            <!-- Barras do gráfico -->
+            <g *ngFor="let point of chartData; let i = index">
+              <!-- Barra de Despesas (vermelha) -->
+              <rect
+                [attr.x]="getBarX(i, 0)"
+                [attr.y]="getBarY(point.expenses, getMaxValue())"
+                [attr.width]="getBarWidth()"
+                [attr.height]="getBarHeight(point.expenses, getMaxValue())"
+                fill="#ef4444"
+                class="chart-bar"
+                rx="0.5"
+                (mouseenter)="showTooltip($event, point.label + ' - Despesas: ' + formatCurrency(point.expenses))"
+                (mouseleave)="hideTooltip()"
               />
-              <polyline
-                points="0,180 50,160 100,150 150,140 200,120 250,110 300,100 350,80 400,70"
-                fill="none"
-                stroke="#10b981"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+              <!-- Barra de Receitas (verde) -->
+              <rect
+                [attr.x]="getBarX(i, 1)"
+                [attr.y]="getBarY(point.revenues, getMaxValue())"
+                [attr.width]="getBarWidth()"
+                [attr.height]="getBarHeight(point.revenues, getMaxValue())"
+                fill="#10b981"
+                class="chart-bar"
+                rx="0.5"
+                (mouseenter)="showTooltip($event, point.label + ' - Receitas: ' + formatCurrency(point.revenues))"
+                (mouseleave)="hideTooltip()"
               />
-              <!-- Eixos -->
-              <line x1="0" y1="0" x2="0" y2="200" stroke="#B3B3B3" stroke-width="1" opacity="0.3"/>
-              <line x1="0" y1="200" x2="400" y2="200" stroke="#B3B3B3" stroke-width="1" opacity="0.3"/>
-            </svg>
-          </div>
+            </g>
+            
+            <!-- Eixos -->
+            <line x1="12" y1="10" x2="12" y2="80" stroke="#94a3b8" stroke-width="0.4" opacity="0.5"/>
+            <line x1="12" y1="80" x2="155" y2="80" stroke="#94a3b8" stroke-width="0.4" opacity="0.5"/>
+            
+            <!-- Labels do eixo X -->
+            <text 
+              *ngFor="let point of chartData; let i = index"
+              [attr.x]="getBarGroupCenter(i)"
+              y="88"
+              text-anchor="middle"
+              font-size="3"
+              fill="#64748b"
+              font-weight="500">
+              {{ point.label }}
+            </text>
+          </svg>
         </div>
       </div>
 
-      <div class="chart-card chart-pie">
-        <h3>Distribuição de Gastos</h3>
-        <div class="pie-chart-wrapper">
-          <div class="pie-chart">
-            <svg viewBox="0 0 200 200">
-              <defs>
-                <linearGradient id="pieGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#0066cc"/>
-                  <stop offset="100%" style="stop-color:#0052a3"/>
-                </linearGradient>
-                <linearGradient id="pieGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#10b981"/>
-                  <stop offset="100%" style="stop-color:#059669"/>
-                </linearGradient>
-                <linearGradient id="pieGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#6366f1"/>
-                  <stop offset="100%" style="stop-color:#4f46e5"/>
-                </linearGradient>
-              </defs>
-              <circle cx="100" cy="100" r="80" fill="url(#pieGrad1)" />
-              <path d="M 100 100 L 100 20 A 80 80 0 0 1 170 130 Z" fill="url(#pieGrad2)" />
-              <path d="M 100 100 L 170 130 A 80 80 0 0 1 100 180 Z" fill="url(#pieGrad3)" />
-            </svg>
+      <!-- Card de Top Categorias -->
+      <div class="chart-card categories-card">
+        <div class="categories-content">
+          <!-- Receitas -->
+          <div class="category-section">
+            <div class="category-header">
+              <i class="fa-solid fa-arrow-trend-up" style="color: #10b981;"></i>
+              <h4>Maiores Receitas</h4>
+            </div>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of topRevenueCategories">
+                <div class="category-info">
+                  <div class="category-dot" style="background: #10b981;"></div>
+                  <span class="category-name">{{ item.category }}</span>
+                </div>
+                <span class="category-amount positive">{{ formatCurrency(item.amount) }}</span>
+              </div>
+              <div class="empty-category" *ngIf="topRevenueCategories.length === 0">
+                <i class="fa-solid fa-inbox"></i>
+                <p>Nenhuma receita</p>
+              </div>
+            </div>
           </div>
-          <div class="pie-legend">
-            <div class="legend-item" *ngFor="let category of expenseCategories">
-              <span class="legend-dot" [style.background]="category.color"></span>
-              <span class="legend-text">{{ category.name }}</span>
+
+          <div class="category-divider"></div>
+
+          <!-- Despesas -->
+          <div class="category-section">
+            <div class="category-header">
+              <i class="fa-solid fa-arrow-trend-down" style="color: #ef4444;"></i>
+              <h4>Maiores Despesas</h4>
+            </div>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of topExpenseCategories">
+                <div class="category-info">
+                  <div class="category-dot" style="background: #ef4444;"></div>
+                  <span class="category-name">{{ item.category }}</span>
+                </div>
+                <span class="category-amount negative">{{ formatCurrency(item.amount) }}</span>
+              </div>
+              <div class="empty-category" *ngIf="topExpenseCategories.length === 0">
+                <i class="fa-solid fa-inbox"></i>
+                <p>Nenhuma despesa</p>
+              </div>
             </div>
           </div>
         </div>
@@ -205,7 +236,7 @@
             <tbody>
               <tr *ngFor="let transaction of transactions">
                 <td class="transaction-desc">{{ transaction.description || 'Sem descrição' }}</td>
-                <td><span class="transaction-category">{{ transaction.category || 'Outros' }}</span></td>
+                <td><span class="transaction-category">{{ getCategoryName(transaction.category_uuid, transaction.type) }}</span></td>
                 <td class="transaction-date">{{ transaction.date || (transaction.transaction_date | date: 'dd/MM/yyyy') }}</td>
                 <td class="transaction-amount" [class.income]="transaction.type === 'income'" [class.expense]="transaction.type === 'expense'">
                   {{ transaction.type === 'income' ? '+' : '-' }} {{ formatCurrency(transaction.amount) }}
@@ -227,4 +258,9 @@
   <app-transaction-modal 
     (onSuccess)="onTransactionSuccess()">
   </app-transaction-modal>
+  
+  <!-- Tooltip -->
+  <div class="chart-tooltip" *ngIf="tooltipVisible" [style.left.px]="tooltipX" [style.top.px]="tooltipY">
+    {{ tooltipContent }}
+  </div>
 </div>

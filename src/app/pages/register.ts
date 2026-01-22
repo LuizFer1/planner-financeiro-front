@@ -65,7 +65,6 @@ export class RegisterComponent {
     // Chamada ao serviço de autenticação
     authService.register(registerData)
       .then(response => {
-        console.log('Cadastro realizado:', response);
         this.loading = false;
         // Redirecionar para dashboard após cadastro
         this.router.navigate(['/dashboard']);
@@ -73,7 +72,6 @@ export class RegisterComponent {
       .catch(error => {
         this.loading = false;
         this.errorMessage = error.message || 'Erro ao realizar cadastro. Tente novamente.';
-        console.error('Erro no cadastro:', error);
       });
   }
 

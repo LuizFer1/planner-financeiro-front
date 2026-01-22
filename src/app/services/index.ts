@@ -9,6 +9,12 @@ export { SystemService, systemService } from './System';
 export { BaseService } from './BaseService';
 export type { ApiResponse } from './BaseService';
 
+// Export security services
+export { LoggerService } from './Logger';
+export { CryptoService } from './Crypto';
+export { ToastService } from './Toast';
+export type { Toast } from './Toast';
+
 // Export types
 export type { 
     RegisterData, 
