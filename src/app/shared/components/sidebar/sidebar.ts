@@ -17,10 +17,10 @@ export class SidebarComponent {
   }
 
   openSettings(): void {
-    console.log('Abrindo configurações...');
+    // TODO: Implementar configurações
   }
 
   openNotifications(): void {
-    console.log('Abrindo notificações...');
+    // TODO: Implementar notificações
   }
 }

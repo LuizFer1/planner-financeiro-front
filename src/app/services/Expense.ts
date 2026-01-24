@@ -11,8 +11,6 @@ export class ExpenseService extends BaseService {
             method: 'GET',
             headers: this.getHeaders(),
         });
-
-        console.log(response)
         return this.handleResponse<Transaction[]>(response);
     }
 
@@ -21,10 +19,12 @@ export class ExpenseService extends BaseService {
      * POST /expense
      */
     async create(data: TransactionData): Promise<ApiResponse<Transaction>> {
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/expense`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         return this.handleResponse<Transaction>(response);
@@ -48,10 +48,12 @@ export class ExpenseService extends BaseService {
      * PUT /expense/{uuid}
      */
     async update(uuid: string, data: TransactionData): Promise<ApiResponse<Transaction>> {
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/expense/${uuid}`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         return this.handleResponse<Transaction>(response);

@@ -56,11 +56,9 @@ export class MercadoComponent implements OnInit {
   cryptosLoading = false;
 
   constructor(private router: Router, private cdr: ChangeDetectorRef) {
-    console.log('=== MercadoComponent Constructor ===');
   }
 
   ngOnInit(): void {
-    console.log('=== ngOnInit Mercado ===');
     this.checkMarketStatus();
     this.loadStats();
     this.loadIndices();
@@ -83,33 +81,20 @@ export class MercadoComponent implements OnInit {
     const marketClose = 17 * 60 + 55; // 17:55 = 1075 minutos
     
     this.isMarketOpen = dayOfWeek >= 1 && dayOfWeek <= 5 && currentTime >= marketOpen && currentTime <= marketClose;
-    
-    console.log('Status do mercado:', {
-      dia: dayOfWeek,
-      hora: `${hours}:${minutes}`,
-      aberto: this.isMarketOpen
-    });
   }
 
   loadStats(): void {
-    console.log('=== Iniciando carregamento de estatísticas ===');
-    console.log('marketService:', marketService);
-    console.log('marketService.getVariation:', marketService.getVariation);
-    
     marketService.getVariation()
       .then(response => {
-        console.log('Stats response:', response);
         const statsData = response.data;
         this.stats = {
           up: parseInt(String(statsData?.up || 0), 10) || 0,
           down: parseInt(String(statsData?.down || 0), 10) || 0,
           total_assets: parseInt(String(statsData?.total_assets || 0), 10) || 0
         };
-        console.log('Stats carregadas:', this.stats);
         this.cdr.markForCheck();
       })
       .catch(error => {
-        console.error('Erro ao carregar estatísticas:', error);
         this.stats = { up: 0, down: 0, total_assets: 0 };
       });
   }
@@ -134,8 +119,8 @@ export class MercadoComponent implements OnInit {
         this.stocksTotal = apiData?.pagination?.total || 0;
         this.cdr.markForCheck();
       })
-      .catch(error => {
-        console.error('Erro ao carregar ações:', error);
+      .catch(() => {
+        // Erro ao carregar ações
       })
       .finally(() => {
         this.stocksLoading = false;
@@ -239,11 +224,11 @@ export class MercadoComponent implements OnInit {
 
   viewDetails(asset: MarketAsset): void {
     marketService.get(asset.uuid)
-      .then(response => {
+      .then(() => {
         // TODO: Mostrar modal ou navegar para página de detalhes
       })
-      .catch(error => {
-        console.error('Erro ao carregar detalhes:', error);
+      .catch(() => {
+        // Erro ao carregar detalhes
       });
   }
 

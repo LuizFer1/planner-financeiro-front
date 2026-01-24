@@ -37,7 +37,6 @@ export class RevenueService extends BaseService {
             method: 'GET',
             headers: this.getHeaders(),
         });
-        console.log(response)
         return this.handleResponse<Transaction[]>(response);
     }
 
@@ -46,10 +45,12 @@ export class RevenueService extends BaseService {
      * POST /revenue
      */
     async create(data: TransactionData): Promise<ApiResponse<Transaction>> {
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/revenue`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         return this.handleResponse<Transaction>(response);
@@ -73,10 +74,12 @@ export class RevenueService extends BaseService {
      * PUT /revenue/{uuid}
      */
     async update(uuid: string, data: TransactionData): Promise<ApiResponse<Transaction>> {
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/revenue/${uuid}`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         return this.handleResponse<Transaction>(response);

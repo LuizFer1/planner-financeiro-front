@@ -33,16 +33,20 @@ export class AuthService extends BaseService {
      * POST /auth/register
      */
     async register(data: RegisterData): Promise<ApiResponse<AuthResponse>> {
+        // Sanitiza os dados antes de enviar
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/auth/register`, {
             method: 'POST',
             headers: this.getHeaders(false),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         const result = await this.handleResponse<AuthResponse>(response);
         
         if (result.data.token) {
             this.setToken(result.data.token);
+            this.logger.info('Usuário registrado com sucesso');
         }
         
         return result;
@@ -53,16 +57,20 @@ export class AuthService extends BaseService {
      * POST /auth/login
      */
     async login(data: LoginData): Promise<ApiResponse<AuthResponse>> {
+        // Sanitiza os dados antes de enviar
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/auth/login`, {
             method: 'POST',
             headers: this.getHeaders(false),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         const result = await this.handleResponse<AuthResponse>(response);
         
         if (result.data.token) {
             this.setToken(result.data.token);
+            this.logger.info('Login realizado com sucesso');
         }
         
         return result;
@@ -80,6 +88,7 @@ export class AuthService extends BaseService {
 
         const result = await this.handleResponse<null>(response);
         this.removeToken();
+        this.logger.info('Logout realizado com sucesso');
         
         return result;
     }

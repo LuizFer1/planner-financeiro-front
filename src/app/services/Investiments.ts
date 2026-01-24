@@ -20,10 +20,12 @@ export class InvestmentService extends BaseService {
      * POST /investment
      */
     async create(data: TransactionData): Promise<ApiResponse<Transaction>> {
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/investment`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         return this.handleResponse<Transaction>(response);
@@ -47,10 +49,12 @@ export class InvestmentService extends BaseService {
      * PUT /investment/{uuid}
      */
     async update(uuid: string, data: TransactionData): Promise<ApiResponse<Transaction>> {
+        const sanitizedData = this.sanitizeData(data);
+        
         const response = await this.fetchWithTimeout(`${this.apiUrl}/investment/${uuid}`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify(data),
+            body: JSON.stringify(sanitizedData),
         });
 
         return this.handleResponse<Transaction>(response);

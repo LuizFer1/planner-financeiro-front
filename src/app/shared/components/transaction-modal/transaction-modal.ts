@@ -95,7 +95,6 @@ export class TransactionModalComponent {
       }, 1500);
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Erro ao adicionar transação';
-      console.error('Erro:', error);
     } finally {
       this.isLoading = false;
     }
