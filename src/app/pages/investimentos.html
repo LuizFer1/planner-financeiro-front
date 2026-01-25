@@ -1,127 +1,287 @@
-<div class="dashboard-container">
-  <!-- Sidebar -->
-  <app-sidebar></app-sidebar>
+<div class="investimentos-page">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <!-- Header -->
-    <header class="dashboard-header">
-      <div class="header-title">
-        <i class="fa-solid fa-chart-pie header-icon"></i>
-        <h1>Meus Investimentos</h1>
-      </div>
-      <button class="btn-add" (click)="addInvestment()">
-        <i class="fa-solid fa-plus"></i> Novo Investimento
-      </button>
-    </header>
-
-    <!-- Resumo -->
-    <section class="summary-cards">
-      <div class="card">
-        <div class="card-icon">
-          <i class="fa-solid fa-coins" style="color: #f39c12;"></i>
-        </div>
-        <div class="card-content">
-          <h3>Total Investido</h3>
-          <p class="card-value">R$ {{ totalInvested.toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">
-          <i class="fa-solid fa-chart-line" style="color: #0066cc;"></i>
-        </div>
-        <div class="card-content">
-          <h3>Valor Atual</h3>
-          <p class="card-value">R$ {{ totalCurrentValue.toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}</p>
-        </div>
-      </div>
-
-      <div class="card card-primary">
-        <div class="card-icon">
-          <i class="fa-solid fa-trophy"></i>
-        </div>
-        <div class="card-content">
-          <h3>Lucro Total</h3>
-          <p class="card-value">R$ {{ totalProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}</p>
-        </div>
-      </div>
-
-      <div class="card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
-        <div class="card-icon" style="background: rgba(255, 255, 255, 0.2);">
-          <i class="fa-solid fa-percent" style="color: #FFFFFF;"></i>
-        </div>
-        <div class="card-content">
-          <h3 style="color: #FFFFFF; opacity: 0.9;">Rentabilidade</h3>
-          <p class="card-value" style="color: #FFFFFF;">{{ totalProfitPercent.toFixed(2) }}%</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Distribuição por Tipo -->
-    <section class="distribution-section">
-      <div class="chart-card">
-        <h3>Distribuição por Tipo</h3>
-        <div class="distribution-grid">
-          <div class="distribution-item" *ngFor="let item of investmentsByType">
-            <div class="distribution-info">
-              <span class="distribution-type">{{ item.type }}</span>
-              <span class="distribution-count">{{ item.count }} {{ item.count === 1 ? 'investimento' : 'investimentos' }}</span>
+    <!-- Conteúdo Principal -->
+    <div class="main-content">
+        <!-- Cabeçalho -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Carteira de Investimentos
+                </h1>
+                <p class="page-subtitle">Gestão completa de seus investimentos em renda fixa e variável</p>
             </div>
-            <div class="distribution-value">
-              R$ {{ item.total.toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}
-            </div>
-          </div>
+            <button class="btn-logout" (click)="logout()" title="Fazer logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
-      </div>
-    </section>
 
-    <!-- Lista de Investimentos -->
-    <section class="transactions-section">
-      <div class="section-header">
-        <h2>Meus Investimentos</h2>
-      </div>
+        <!-- Conteúdo -->
+        <div class="page-content">
+            <!-- Estado de Carregamento -->
+            <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
 
-      <div class="investments-grid">
-        <div class="investment-card" *ngFor="let investment of investments">
-          <div class="investment-header">
-            <div class="investment-type-badge">{{ investment.type }}</div>
-            <div class="investment-actions">
-              <button class="action-btn" (click)="editInvestment(investment)">
-                <i class="fa-solid fa-pen"></i>
-              </button>
-              <button class="action-btn delete" (click)="deleteInvestment(investment)">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-          </div>
+            <!-- Mensagem de Erro -->
+            <app-error-message
+                *ngIf="errorMessage && !isLoading"
+                [title]="'Erro ao carregar investimentos'"
+                [message]="errorMessage"
+                [showRetry]="true"
+                (onRetry)="loadInvestments()"
+            ></app-error-message>
 
-          <h3 class="investment-name">{{ investment.name }}</h3>
+            <!-- Estado Vazio -->
+            <app-empty-state
+                *ngIf="!isLoading && !errorMessage && investments.length === 0"
+                [icon]="'fa-inbox'"
+                [title]="'Nenhum investimento cadastrado'"
+                [message]="'Comece a investir agora mesmo!'"
+                [actionLabel]="'Novo Investimento'"
+                (onAction)="openNewFixedIncome()"
+            ></app-empty-state>
 
-          <div class="investment-details">
-            <div class="detail-row">
-              <span class="detail-label">Investido</span>
-              <span class="detail-value">R$ {{ investment.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Valor Atual</span>
-              <span class="detail-value">R$ {{ (investment.currentValue ?? investment.amount).toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}</span>
-            </div>
-            <div class="detail-row profit">
-              <span class="detail-label">Lucro</span>
-              <span class="detail-value">
-                R$ {{ (investment.profit ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2}) }}
-                <span class="profit-percent">(+{{ (investment.profitPercent ?? 0).toFixed(1) }}%)</span>
-              </span>
-            </div>
-          </div>
+            <!-- Conteúdo Principal (quando há dados) -->
+            <ng-container *ngIf="!isLoading && !errorMessage && investments.length > 0">
+                <!-- Resumo Consolidado -->
+                <section class="summary-section">
+                    <h2 class="section-title">Resumo da Carteira</h2>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="card-label">Total Investido</div>
+                            <div class="card-value">
+                                {{ formatCurrency(portfolioSummary.total_invested) }}
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="card-label">Valor Atual</div>
+                            <div class="card-value">
+                                {{ formatCurrency(portfolioSummary.total_current_value) }}
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                        </div>
+
+                        <div class="summary-card" [ngClass]="getProfitClass(portfolioSummary.total_profit)">
+                            <div class="card-label">Rendimento Total</div>
+                            <div class="card-value">
+                                {{ formatCurrency(portfolioSummary.total_profit) }}
+                            </div>
+                            <div class="card-subvalue">
+                                ({{ formatPercent(portfolioSummary.total_profit_percent) }})
+                            </div>
+                            <div class="card-icon">
+                                <i
+                                    [class]="
+                                        portfolioSummary.total_profit >= 0
+                                            ? 'fas fa-arrow-up'
+                                            : 'fas fa-arrow-down'
+                                    "
+                                ></i>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Renda Fixa -->
+                <section class="investment-section">
+                    <div class="section-header">
+                        <div class="header-left">
+                            <h2 class="section-title">
+                                <i class="fas fa-piggy-bank"></i>
+                                Renda Fixa
+                            </h2>
+                            <span class="investment-count">{{ fixedIncomeInvestments.length }} investimentos</span>
+                        </div>
+                        <button class="btn-add" (click)="openNewFixedIncome()" title="Adicionar renda fixa">
+                            <i class="fas fa-plus"></i>
+                            Adicionar
+                        </button>
+                    </div>
+
+                    <!-- Investimentos de Renda Fixa -->
+                    <div class="investments-list" *ngIf="fixedIncomeInvestments.length > 0">
+                        <div *ngFor="let investment of fixedIncomeInvestments" class="investment-card">
+                            <div class="card-header">
+                                <div class="card-title">{{ investment.fixed_income?.name }}</div>
+                                <div class="card-actions">
+                                    <button
+                                        class="btn-icon"
+                                        (click)="editInvestment(investment)"
+                                        title="Editar"
+                                    >
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button
+                                        class="btn-icon btn-danger"
+                                        (click)="deleteInvestment(investment)"
+                                        title="Deletar"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="investment-row">
+                                    <div class="investment-info">
+                                        <div class="investment-label">Valor Investido</div>
+                                        <div class="investment-value">
+                                            {{ formatCurrency(+investment.amount) }}
+                                        </div>
+                                    </div>
+                                    <div class="investment-info">
+                                        <div class="investment-label">Rendimento</div>
+                                        <div class="investment-value" [ngClass]="getProfitClass(investment.profit || 0)">
+                                            {{ formatCurrency(investment.profit == null ? 0 : +investment.profit) }}
+                                        </div>
+                                    </div>
+                                    <div class="investment-info">
+                                        <div class="investment-label">Valor Atual</div>
+                                        <div class="investment-value">
+                                            {{ formatCurrency(investment.currentValue == null ? +investment.amount : +investment.currentValue) }}
+                                        </div>
+                                    </div>
+                                    <div class="investment-info">
+                                        <div class="investment-label">Taxa (a.a.)</div>
+                                        <div class="investment-value">
+                                            {{ formatPercent((investment.fixed_income && investment.fixed_income.yield_rate != null) ? +investment.fixed_income.yield_rate : 0) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="investment-description" *ngIf="investment.description">
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ investment.description }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subtotal Renda Fixa -->
+                    <div class="section-footer">
+                        <div class="footer-label">Subtotal Renda Fixa:</div>
+                        <div class="footer-values">
+                            <span class="footer-value">
+                                Investido: {{ formatCurrency(fixedIncomeTotal.invested) }}
+                            </span>
+                            <span class="footer-value" [ngClass]="getProfitClass(fixedIncomeTotal.profit)">
+                                Rendimento: {{ formatCurrency(fixedIncomeTotal.profit) }}
+                                ({{ formatPercent(fixedIncomeTotal.profitPercent) }})
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Renda Variável -->
+                <section class="investment-section">
+                    <div class="section-header">
+                        <div class="header-left">
+                            <h2 class="section-title">
+                                <i class="fas fa-chart-line"></i>
+                                Renda Variável
+                            </h2>
+                            <span class="investment-count">{{ variableIncomeInvestments.length }} posições</span>
+                        </div>
+                        <button class="btn-add" (click)="openNewVariableIncome()" title="Adicionar ação">
+                            <i class="fas fa-plus"></i>
+                            Adicionar
+                        </button>
+                    </div>
+
+                    <!-- Lista de Ações -->
+                    <div *ngIf="variableIncomeInvestments.length > 0; else noVariableIncome">
+                        <div *ngFor="let investment of variableIncomeInvestments" class="investment-card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <span class="ticker">{{ investment.stock_symbol || investment.variable_income?.stock_uuid }}</span>
+                                    <span class="quantity">{{ investment.variable_income?.quantity }} ações</span>
+                                </div>
+                                <div class="card-actions">
+                                    <button
+                                        class="btn-icon"
+                                        (click)="editInvestment(investment)"
+                                        title="Editar"
+                                    >
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button
+                                        class="btn-icon btn-danger"
+                                        (click)="deleteInvestment(investment)"
+                                        title="Deletar"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="investment-row">
+                                    <div class="investment-info">
+                                        <div class="investment-label">Preço de Compra</div>
+                                        <div class="investment-value">
+                                            {{ formatCurrency((investment.variable_income && investment.variable_income.unit_price != null) ? +investment.variable_income.unit_price : 0) }}
+                                        </div>
+                                    </div>
+                                    <div class="investment-info">
+                                        <div class="investment-label">Valor Total</div>
+                                        <div class="investment-value">
+                                            {{ formatCurrency(+investment.amount) }}
+                                        </div>
+                                    </div>
+                                    <div class="investment-info">
+                                        <div class="investment-label">Ganho/Perda</div>
+                                        <div class="investment-value" [ngClass]="getProfitClass(investment.profit || 0)">
+                                            {{ formatCurrency(investment.profit == null ? 0 : +investment.profit) }}
+                                        </div>
+                                    </div>
+                                    <div class="investment-info">
+                                        <div class="investment-label">Variação %</div>
+                                        <div class="investment-value" [ngClass]="getProfitClass(investment.profitPercent || 0)">
+                                            {{ formatPercent(investment.profitPercent || 0) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="investment-description" *ngIf="investment.description">
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ investment.description }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State para Renda Variável -->
+                    <ng-template #noVariableIncome>
+                        <div class="empty-placeholder">
+                            <i class="fas fa-inbox"></i>
+                            <p>Nenhuma ação cadastrada</p>
+                        </div>
+                    </ng-template>
+
+                    <!-- Subtotal Renda Variável -->
+                    <div class="section-footer" *ngIf="variableIncomeInvestments.length > 0">
+                        <div class="footer-label">Subtotal Renda Variável:</div>
+                        <div class="footer-values">
+                            <span class="footer-value">
+                                Investido: {{ formatCurrency(variableIncomeTotal.invested) }}
+                            </span>
+                            <span class="footer-value" [ngClass]="getProfitClass(variableIncomeTotal.profit)">
+                                Ganho/Perda: {{ formatCurrency(variableIncomeTotal.profit) }}
+                                ({{ formatPercent(variableIncomeTotal.profitPercent) }})
+                            </span>
+                        </div>
+                    </div>
+                </section>
+            </ng-container>
         </div>
-      </div>
-    </section>
-  </main>
+    </div>
 
-  <!-- Transaction Modal -->
-  <app-transaction-modal 
-    (onSuccess)="onTransactionSuccess()">
-  </app-transaction-modal>
+    <!-- Investment Modal -->
+    <app-investment-modal
+        (onSuccess)="onInvestmentSuccess()"
+        (onCancel)="onInvestmentCancel()"
+    ></app-investment-modal>
 </div>
