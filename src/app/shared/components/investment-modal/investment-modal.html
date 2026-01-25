@@ -110,15 +110,40 @@
             <!-- Renda Variável -->
             <ng-container *ngIf="investmentType === 'rendavariavel'">
                 <div class="form-group">
-                    <label for="stock_uuid">Ticker/UUID da Ação *</label>
-                    <input
-                        type="text"
-                        id="stock_uuid"
-                        formControlName="stock_uuid"
-                        placeholder="Ex: PETR4, VALE3"
-                        class="form-input"
-                        [class.is-invalid]="isFieldInvalid('stock_uuid')"
-                    />
+                    <label for="stock_ticker">Ticker da Ação *</label>
+                    <div class="stock-search-container">
+                        <input
+                            type="text"
+                            id="stock_ticker"
+                            formControlName="stock_uuid"
+                            placeholder="Ex: PETR4, VALE3"
+                            class="form-input"
+                            [class.is-invalid]="isFieldInvalid('stock_uuid')"
+                            (input)="onStockSearchChange($any($event.target).value)"
+                            (blur)="closeStockDropdown()"
+                            autocomplete="off"
+                        />
+                        <div class="stock-dropdown" *ngIf="showStockDropdown || isSearchingStocks">
+                            <div class="spinner" *ngIf="isSearchingStocks">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                Buscando ações...
+                            </div>
+                            <div *ngIf="!isSearchingStocks && stockSearchResults.length > 0" class="dropdown-list">
+                                <button
+                                    type="button"
+                                    *ngFor="let stock of stockSearchResults"
+                                    class="dropdown-item"
+                                    (mousedown)="selectStock(stock)"
+                                >
+                                    <span class="stock-symbol">{{ stock.stock_symbol }}</span>
+                                    <span class="stock-name">{{ stock.stock_name }}</span>
+                                </button>
+                            </div>
+                            <div *ngIf="!isSearchingStocks && stockSearchResults.length === 0" class="dropdown-item disabled">
+                                Nenhuma ação encontrada
+                            </div>
+                        </div>
+                    </div>
                     <span class="error-message" *ngIf="isFieldInvalid('stock_uuid')">
                         {{ getErrorMessage('stock_uuid') }}
                     </span>

@@ -1,6 +1,7 @@
 import { BaseService, ApiResponse } from './BaseService';
 import {
     Investment,
+    InvestmentApiResponse,
     InvestmentInput,
     InvestmentUpdateInput,
     InvestmentSummary,
@@ -9,6 +10,75 @@ import {
 } from './investment.models';
 
 export class InvestmentService extends BaseService {
+    /**
+     * Normalizar dados do investimento da API para o formato do frontend
+     */
+    private normalizeInvestment(apiData: InvestmentApiResponse): Investment {
+        const investment: Investment = {
+            id: apiData.id,
+            uuid: apiData.uuid,
+            user_uuid: apiData.user_uuid,
+            amount: typeof apiData.amount === 'string' ? parseFloat(apiData.amount) : apiData.amount,
+            investment_type: apiData.investment_type,
+            description: apiData.description,
+            purchase_date: apiData.purchase_date,
+            sale_date: apiData.sale_date,
+            created_at: apiData.created_at,
+            updated_at: apiData.updated_at,
+            fixed_income: apiData.fixed_income
+                ? {
+                    id: apiData.fixed_income.id,
+                    uuid: apiData.fixed_income.uuid,
+                    investment_uuid: apiData.fixed_income.investment_uuid,
+                    name: apiData.fixed_income.name,
+                    yield_rate: String(apiData.fixed_income.yield_rate),
+                    tax_exempt: String(apiData.fixed_income.tax_exempt),
+                    created_at: apiData.fixed_income.created_at,
+                    updated_at: apiData.fixed_income.updated_at,
+                }
+                : undefined,
+            variable_income: apiData.variable_income
+                ? {
+                    id: apiData.variable_income.id,
+                    uuid: apiData.variable_income.uuid,
+                    investment_uuid: apiData.variable_income.investment_uuid,
+                    stock_uuid: apiData.variable_income.stock_uuid,
+                    current_price:
+                        (apiData.variable_income as any).current_price ??
+                        (apiData.variable_income as any).stock?.current_price ??
+                        '',
+                    quantity: String(apiData.variable_income.quantity),
+                    unit_price: String(apiData.variable_income.unit_price),
+                    created_at: apiData.variable_income.created_at,
+                    updated_at: apiData.variable_income.updated_at,
+                    stock: (apiData.variable_income as any).stock
+                        ? {
+                            id: (apiData.variable_income as any).stock.id,
+                            uuid: (apiData.variable_income as any).stock.uuid,
+                            stock_symbol: (apiData.variable_income as any).stock.stock_symbol,
+                            stock_name: (apiData.variable_income as any).stock.stock_name,
+                            volume: (apiData.variable_income as any).stock.volume,
+                            market_cap: (apiData.variable_income as any).stock.market_cap,
+                            logo: (apiData.variable_income as any).stock.logo,
+                            market: (apiData.variable_income as any).stock.market,
+                            sector: (apiData.variable_income as any).stock.sector,
+                            type: (apiData.variable_income as any).stock.type,
+                            created_at: (apiData.variable_income as any).stock.created_at,
+                            updated_at: (apiData.variable_income as any).stock.updated_at,
+                            deleted_at: (apiData.variable_income as any).stock.deleted_at,
+                        }
+                        : undefined,
+                }
+                : undefined,
+            stock_symbol: (apiData.variable_income as any)?.stock?.stock_symbol || '',
+        };
+        
+        if (investment.investment_type === 'rendavariavel' && investment.variable_income?.current_price) {
+            investment.currentValue = parseFloat(investment.variable_income.current_price) * (parseFloat(investment.variable_income.quantity) || 0);
+        }
+        return investment;
+    }
+
     /**
      * Listar todos os investimentos
      * GET /investment
@@ -19,7 +89,16 @@ export class InvestmentService extends BaseService {
             headers: this.getHeaders(),
         });
 
-        return this.handleResponse<Investment[]>(response);
+        const apiResponse = await this.handleResponse<InvestmentApiResponse[]>(response);
+        
+        if (apiResponse.status === 'success' && apiResponse.data) {
+            return {
+                ...apiResponse,
+                data: apiResponse.data.map(inv => this.normalizeInvestment(inv)),
+            };
+        }
+
+        return apiResponse as ApiResponse<Investment[]>;
     }
 
     /**
@@ -130,10 +209,11 @@ export class InvestmentService extends BaseService {
             const daysElapsed = Math.floor(
                 (today.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)
             );
-            return (investment.amount * (investment.yield_rate! / 100) * (daysElapsed / 365)) || 0;
+            const yieldRate = Number(investment.fixed_income?.yield_rate) || 0;
+            return (Number(investment.amount) * (yieldRate / 100) * (daysElapsed / 365)) || 0;
         } else if (investment.investment_type === 'rendavariavel') {
-            // Renda Variável: Lucro = (currentValue - amount) ou (preço_atual - unit_price) * quantity
-            return (investment.currentValue || 0) - investment.amount;
+            // Renda Variável: Lucro = (currentValue - amount)
+            return (Number(investment.currentValue) || 0) - Number(investment.amount);
         }
         return 0;
     }
@@ -143,7 +223,7 @@ export class InvestmentService extends BaseService {
      */
     calculateProfitPercent(investment: Investment): number {
         const profit = this.calculateProfit(investment);
-        return investment.amount > 0 ? (profit / investment.amount) * 100 : 0;
+        return Number(investment.amount) > 0 ? (profit / Number(investment.amount)) * 100 : 0;
     }
 
     /**
@@ -151,7 +231,9 @@ export class InvestmentService extends BaseService {
      */
     getEmergencyReserve(investments: Investment[]): Investment | undefined {
         return investments.find(
-            (inv) => inv.investment_type === 'rendafixa' && inv.name === 'Reserva de Emergência'
+            (inv) => inv.investment_type === 'rendafixa' && 
+                inv.fixed_income?.name?.toLowerCase().includes('reserva de emergencia') ||
+                inv.fixed_income?.name?.toLowerCase().includes('reserva de emergência')
         );
     }
 
@@ -160,7 +242,9 @@ export class InvestmentService extends BaseService {
      */
     getOtherFixedIncome(investments: Investment[]): Investment[] {
         return investments.filter(
-            (inv) => inv.investment_type === 'rendafixa' && inv.name !== 'Reserva de Emergência'
+            (inv) => inv.investment_type === 'rendafixa' && 
+                !inv.fixed_income?.name?.toLowerCase().includes('reserva de emergencia') &&
+                !inv.fixed_income?.name?.toLowerCase().includes('reserva de emergência')
         );
     }
 }

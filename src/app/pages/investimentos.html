@@ -38,7 +38,6 @@
                 [icon]="'fa-inbox'"
                 [title]="'Nenhum investimento cadastrado'"
                 [message]="'Comece a investir agora mesmo!'"
-                [showAction]="true"
                 [actionLabel]="'Novo Investimento'"
                 (onAction)="openNewFixedIncome()"
             ></app-empty-state>
@@ -52,7 +51,7 @@
                         <div class="summary-card">
                             <div class="card-label">Total Investido</div>
                             <div class="card-value">
-                                {{ formatCurrency(summary?.total_invested || 0) }}
+                                {{ formatCurrency(portfolioSummary.total_invested) }}
                             </div>
                             <div class="card-icon">
                                 <i class="fas fa-wallet"></i>
@@ -62,25 +61,25 @@
                         <div class="summary-card">
                             <div class="card-label">Valor Atual</div>
                             <div class="card-value">
-                                {{ formatCurrency(summary?.total_current_value || 0) }}
+                                {{ formatCurrency(portfolioSummary.total_current_value) }}
                             </div>
                             <div class="card-icon">
                                 <i class="fas fa-coins"></i>
                             </div>
                         </div>
 
-                        <div class="summary-card" [ngClass]="getProfitClass(summary?.total_profit || 0)">
+                        <div class="summary-card" [ngClass]="getProfitClass(portfolioSummary.total_profit)">
                             <div class="card-label">Rendimento Total</div>
                             <div class="card-value">
-                                {{ formatCurrency(summary?.total_profit || 0) }}
+                                {{ formatCurrency(portfolioSummary.total_profit) }}
                             </div>
                             <div class="card-subvalue">
-                                ({{ formatPercent(summary?.total_profit_percent || 0) }})
+                                ({{ formatPercent(portfolioSummary.total_profit_percent) }})
                             </div>
                             <div class="card-icon">
                                 <i
                                     [class]="
-                                        (summary?.total_profit || 0) >= 0
+                                        portfolioSummary.total_profit >= 0
                                             ? 'fas fa-arrow-up'
                                             : 'fas fa-arrow-down'
                                     "
@@ -106,65 +105,11 @@
                         </button>
                     </div>
 
-                    <!-- Reserva de Emergência -->
-                    <div *ngIf="emergencyReserve" class="emergency-reserve-card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <i class="fas fa-shield-alt"></i>
-                                Reserva de Emergência
-                            </div>
-                            <div class="card-actions">
-                                <button
-                                    class="btn-icon"
-                                    (click)="editInvestment(emergencyReserve)"
-                                    title="Editar"
-                                >
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button
-                                    class="btn-icon btn-danger"
-                                    (click)="deleteInvestment(emergencyReserve)"
-                                    title="Deletar"
-                                >
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="investment-row">
-                                <div class="investment-info">
-                                    <div class="investment-label">Valor Investido</div>
-                                    <div class="investment-value">
-                                        {{ formatCurrency(emergencyReserve.amount) }}
-                                    </div>
-                                </div>
-                                <div class="investment-info">
-                                    <div class="investment-label">Rendimento</div>
-                                    <div class="investment-value" [ngClass]="getProfitClass(emergencyReserve.profit || 0)">
-                                        {{ formatCurrency(emergencyReserve.profit || 0) }}
-                                    </div>
-                                </div>
-                                <div class="investment-info">
-                                    <div class="investment-label">Valor Atual</div>
-                                    <div class="investment-value">
-                                        {{ formatCurrency(emergencyReserve.currentValue || emergencyReserve.amount) }}
-                                    </div>
-                                </div>
-                                <div class="investment-info">
-                                    <div class="investment-label">Taxa (a.a.)</div>
-                                    <div class="investment-value">
-                                        {{ formatPercent(emergencyReserve.yield_rate || 0) }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Outros Investimentos de Renda Fixa -->
-                    <div class="investments-list" *ngIf="otherFixedIncomeInvestments.length > 0">
-                        <div *ngFor="let investment of otherFixedIncomeInvestments" class="investment-card">
+                    <!-- Investimentos de Renda Fixa -->
+                    <div class="investments-list" *ngIf="fixedIncomeInvestments.length > 0">
+                        <div *ngFor="let investment of fixedIncomeInvestments" class="investment-card">
                             <div class="card-header">
-                                <div class="card-title">{{ investment.name }}</div>
+                                <div class="card-title">{{ investment.fixed_income?.name }}</div>
                                 <div class="card-actions">
                                     <button
                                         class="btn-icon"
@@ -187,25 +132,25 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Valor Investido</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(investment.amount) }}
+                                            {{ formatCurrency(+investment.amount) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Rendimento</div>
                                         <div class="investment-value" [ngClass]="getProfitClass(investment.profit || 0)">
-                                            {{ formatCurrency(investment.profit || 0) }}
+                                            {{ formatCurrency(+investment.profit || 0) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Valor Atual</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(investment.currentValue || investment.amount) }}
+                                            {{ formatCurrency(+investment.currentValue || +investment.amount) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Taxa (a.a.)</div>
                                         <div class="investment-value">
-                                            {{ formatPercent(investment.yield_rate || 0) }}
+                                            {{ formatPercent(+investment.fixed_income?.yield_rate || 0) }}
                                         </div>
                                     </div>
                                 </div>
@@ -253,8 +198,8 @@
                         <div *ngFor="let investment of variableIncomeInvestments" class="investment-card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <span class="ticker">{{ investment.stock_uuid }}</span>
-                                    <span class="quantity">{{ investment.quantity }} ações</span>
+                                    <span class="ticker">{{ investment.stock_symbol || investment.variable_income?.stock_uuid }}</span>
+                                    <span class="quantity">{{ investment.variable_income?.quantity }} ações</span>
                                 </div>
                                 <div class="card-actions">
                                     <button
@@ -278,19 +223,19 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Preço de Compra</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(investment.unit_price || 0) }}
+                                            {{ formatCurrency(+investment.variable_income?.unit_price || 0) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Valor Total</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(investment.amount) }}
+                                            {{ formatCurrency(+investment.amount) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Ganho/Perda</div>
                                         <div class="investment-value" [ngClass]="getProfitClass(investment.profit || 0)">
-                                            {{ formatCurrency(investment.profit || 0) }}
+                                            {{ formatCurrency(+investment.profit || 0) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">

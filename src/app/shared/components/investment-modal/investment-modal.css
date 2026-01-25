@@ -7,6 +7,7 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     padding: 0;
     animation: slideIn 0.3s ease-out;
+    margin: auto;
 }
 
 .investment-modal-dialog::backdrop {
@@ -157,9 +158,11 @@ textarea.form-input {
 .checkbox-label {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     cursor: pointer;
     font-weight: 400;
+    margin-top: 30px;
     padding-top: 8px;
 }
 
@@ -301,4 +304,85 @@ textarea.form-input {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Stock Search Container */
+.stock-search-container {
+    position: relative;
+}
+
+.stock-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.stock-dropdown .spinner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.stock-dropdown .spinner i {
+    animation: spin 1s linear infinite;
+}
+
+.dropdown-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdown-item:hover:not(.disabled) {
+    background-color: #f9fafb;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item.disabled {
+    cursor: not-allowed;
+    color: #9ca3af;
+    text-align: center;
+    justify-content: center;
+}
+
+.dropdown-item .stock-symbol {
+    font-weight: 600;
+    color: #1f2937;
+    min-width: 80px;
+}
+
+.dropdown-item .stock-name {
+    flex: 1;
+    color: #6b7280;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

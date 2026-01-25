@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild, ElementRef, NgZone, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -6,9 +6,11 @@ import {
     InvestmentInput,
     InvestmentUpdateInput,
     InvestmentType,
-} from '../../services/investment.models';
-import { investmentService } from '../../services/Investiments';
-import { toastService } from '../../services/Toast';
+} from '../../../services/investment.models';
+import { investmentService } from '../../../services/Investiments';
+import { ToastService } from '../../../services/Toast';
+import { Stock } from '../../../services/Market';
+import { MarketService } from '../../../services/Market';
 
 @Component({
     selector: 'app-investment-modal',
@@ -16,6 +18,7 @@ import { toastService } from '../../services/Toast';
     imports: [CommonModule, ReactiveFormsModule],
     templateUrl: './investment-modal.html',
     styleUrls: ['./investment-modal.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvestmentModalComponent {
     @ViewChild('modal', { static: false }) modal?: ElementRef;
@@ -28,43 +31,55 @@ export class InvestmentModalComponent {
     isEditing = false;
     editingUuid?: string;
     investmentType: InvestmentType = 'rendafixa';
+    
+    // Busca de ações
+    stockSearchResults: Stock[] = [];
+    isSearchingStocks = false;
+    showStockDropdown = false;
+    searchTimeout: any;
+    
+    // Campo de exibição do ticker
+    stockTickerDisplay = '';
+    selectedStockUuid = '';
 
-    constructor(private fb: FormBuilder) {
-        this.initializeForm();
+    private marketService = new MarketService();
+
+    constructor(private fb: FormBuilder, private toastService: ToastService, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
+            this.initializeForm();
     }
 
     /**
      * Inicializar formulário reativo
      */
-    private initializeForm(): void {
+    initializeForm(): void {
         this.form = this.fb.group({
-            // Campos comuns
             amount: [0, [Validators.required, Validators.min(0.01)]],
             description: [''],
             purchase_date: [this.getTodayDate(), Validators.required],
             sale_date: [null],
 
-            // Campos Renda Fixa
             name: [''],
             yield_rate: [0],
             tax_exempt: [false],
 
-            // Campos Renda Variável
             stock_uuid: [''],
             quantity: [0],
             unit_price: [0],
         });
 
-        // Atualizar validadores quando o tipo mudar
         this.form.get('amount')?.valueChanges.subscribe(() => {
             this.updateValidators();
+        });
+
+        this.form.get('stock_uuid')?.valueChanges.subscribe((value) => {
+            this.onStockSearchChange(value);
         });
     }
 
     /**
      * Atualizar validadores conforme o tipo de investimento
      */
-    private updateValidators(): void {
+    updateValidators(): void {
         const nameControl = this.form.get('name');
         const yield_rateControl = this.form.get('yield_rate');
         const stock_uuidControl = this.form.get('stock_uuid');
@@ -99,7 +114,7 @@ export class InvestmentModalComponent {
     /**
      * Obter data de hoje no formato YYYY-MM-DD
      */
-    private getTodayDate(): string {
+    getTodayDate(): string {
         const today = new Date();
         return today.toISOString().split('T')[0];
     }
@@ -111,6 +126,10 @@ export class InvestmentModalComponent {
         this.isEditing = false;
         this.editingUuid = undefined;
         this.investmentType = type;
+        this.stockTickerDisplay = '';
+        this.selectedStockUuid = '';
+        this.stockSearchResults = [];
+        this.showStockDropdown = false;
         this.form.reset({
             amount: 0,
             description: '',
@@ -125,7 +144,11 @@ export class InvestmentModalComponent {
         });
         this.updateValidators();
         this.isOpen = true;
-        setTimeout(() => this.modal?.nativeElement?.showModal(), 0);
+        this.cdr.markForCheck();
+        setTimeout(() => {
+            this.modal?.nativeElement?.showModal();
+            this.cdr.markForCheck();
+        }, 0);
     }
 
     /**
@@ -135,28 +158,65 @@ export class InvestmentModalComponent {
         this.isEditing = true;
         this.editingUuid = investment.uuid;
         this.investmentType = investment.investment_type;
+        
+        // Resetar campos de busca de ação
+        this.stockSearchResults = [];
+        this.showStockDropdown = false;
+
+        // Formatar data de compra para o formato do input date (YYYY-MM-DD)
+        const purchaseDate = investment.purchase_date 
+            ? investment.purchase_date.split(' ')[0] 
+            : this.getTodayDate();
+        
+        const saleDate = investment.sale_date 
+            ? investment.sale_date.split(' ')[0] 
+            : null;
 
         const formData: any = {
             amount: investment.amount,
             description: investment.description || '',
-            purchase_date: investment.purchase_date,
-            sale_date: investment.sale_date || null,
+            purchase_date: purchaseDate,
+            sale_date: saleDate,
         };
 
         if (investment.investment_type === 'rendafixa') {
-            formData.name = investment.name || '';
-            formData.yield_rate = investment.yield_rate || 0;
-            formData.tax_exempt = investment.tax_exempt || false;
+            formData.name = investment.fixed_income?.name || '';
+            formData.yield_rate = Number(investment.fixed_income?.yield_rate) || 0;
+            formData.tax_exempt = investment.fixed_income?.tax_exempt === '1' ? true : false;
+            this.stockTickerDisplay = '';
+            this.selectedStockUuid = '';
         } else {
-            formData.stock_uuid = investment.stock_uuid || '';
-            formData.quantity = investment.quantity || 0;
-            formData.unit_price = investment.unit_price || 0;
+            this.selectedStockUuid = investment.variable_income?.stock_uuid || '';
+            if (investment.stock_symbol) {
+                this.stockTickerDisplay = investment.stock_symbol;
+                formData.stock_uuid = investment.stock_symbol;
+            } else if (investment.variable_income?.stock_uuid) {
+                this.marketService.get(investment.variable_income.stock_uuid).then((response: any) => {
+                    const stock = response.data;
+                    if (stock) {
+                        this.stockTickerDisplay = stock.stock_symbol;
+                        this.form.patchValue({ stock_uuid: stock.stock_symbol });
+                    }
+                    this.cdr.markForCheck();
+                });
+                this.stockTickerDisplay = investment.variable_income.stock_uuid;
+                formData.stock_uuid = investment.variable_income.stock_uuid;
+            } else {
+                this.stockTickerDisplay = '';
+                formData.stock_uuid = '';
+            }
+            formData.quantity = Number(investment.variable_income?.quantity) || 0;
+            formData.unit_price = Number(investment.variable_income?.unit_price) || 0;
         }
 
         this.form.patchValue(formData);
         this.updateValidators();
         this.isOpen = true;
-        setTimeout(() => this.modal?.nativeElement?.showModal(), 0);
+        this.cdr.markForCheck();
+        setTimeout(() => {
+            this.modal?.nativeElement?.showModal();
+            this.cdr.markForCheck();
+        }, 0);
     }
 
     /**
@@ -164,6 +224,7 @@ export class InvestmentModalComponent {
      */
     close(): void {
         this.isOpen = false;
+        this.cdr.markForCheck();
         if (this.modal) {
             this.modal.nativeElement?.close();
         }
@@ -175,11 +236,12 @@ export class InvestmentModalComponent {
      */
     async onSubmit(): Promise<void> {
         if (!this.form.valid) {
-            toastService.error('Por favor, preencha todos os campos obrigatórios');
+            this.toastService.error('Por favor, preencha todos os campos obrigatórios');
             return;
         }
 
         this.isLoading = true;
+        this.cdr.markForCheck();
 
         try {
             const formValue = this.form.value;
@@ -200,7 +262,7 @@ export class InvestmentModalComponent {
                 payload = {
                     amount: parseFloat(formValue.amount),
                     investment_type: 'rendavariavel',
-                    stock_uuid: formValue.stock_uuid,
+                    stock_uuid: this.selectedStockUuid || formValue.stock_uuid,
                     quantity: parseInt(formValue.quantity, 10),
                     unit_price: parseFloat(formValue.unit_price),
                     description: formValue.description || undefined,
@@ -232,8 +294,12 @@ export class InvestmentModalComponent {
                 result = await investmentService.create(payload as InvestmentInput);
             }
 
-            if (result.status && result.data) {
-                toastService.success(
+            if (result.status === 'success' && result.data) {
+                this.stockSearchResults = [];
+                this.showStockDropdown = false;
+                this.isSearchingStocks = false;
+
+                this.toastService.success(
                     this.isEditing
                         ? 'Investimento atualizado com sucesso!'
                         : 'Investimento criado com sucesso!'
@@ -241,13 +307,14 @@ export class InvestmentModalComponent {
                 this.onSuccess.emit(result.data as Investment);
                 this.close();
             } else {
-                toastService.error(result.message || 'Erro ao salvar investimento');
+                this.toastService.error(result.message || 'Erro ao salvar investimento');
             }
         } catch (error) {
             console.error('Erro ao salvar investimento:', error);
-            toastService.error('Erro ao salvar investimento');
+            this.toastService.error('Erro ao salvar investimento');
         } finally {
             this.isLoading = false;
+            this.cdr.markForCheck();
         }
     }
 
@@ -298,5 +365,83 @@ export class InvestmentModalComponent {
         if (field.errors['pattern']) return 'Formato inválido';
 
         return 'Campo inválido';
+    }
+
+    /**
+     * Manipular mudanças no campo de busca de ações
+     */
+    onStockSearchChange(searchTerm: string): void {
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
+        // Se o ticker mudou, limpar o uuid selecionado
+        if (searchTerm !== this.stockTickerDisplay) {
+            this.selectedStockUuid = '';
+        }
+
+        if (!searchTerm || searchTerm.length < 3) {
+            this.stockSearchResults = [];
+            this.showStockDropdown = false;
+            return;
+        }
+
+        this.searchTimeout = setTimeout(() => {
+            this.ngZone.run(() => {
+                this.searchStocks(searchTerm);
+            });
+        }, 300);
+    }
+
+    /**
+     * Buscar ações pela term de busca
+     */
+    private async searchStocks(searchTerm: string): Promise<void> {
+        this.isSearchingStocks = true;
+        this.showStockDropdown = true;
+        this.cdr.markForCheck();
+
+        try {
+            const searchResult = await this.marketService.search(searchTerm);
+            
+            if (searchResult.status && searchResult.data) {
+                if (Array.isArray(searchResult.data)) {
+                    this.stockSearchResults = searchResult.data.slice(0, 10);
+                } else {
+                    this.stockSearchResults = [searchResult.data];
+                }
+            } else {
+                this.stockSearchResults = [];
+            }
+        } catch (error) {
+            console.error('Erro ao buscar ações:', error);
+            this.stockSearchResults = [];
+        } finally {
+            this.isSearchingStocks = false;
+            this.cdr.markForCheck();
+        }
+    }
+
+    /**
+     * Selecionar uma ação da lista de resultados
+     */
+    selectStock(stock: Stock): void {
+        this.stockTickerDisplay = stock.stock_symbol;
+        this.selectedStockUuid = stock.uuid;
+        this.form.patchValue({
+            stock_uuid: stock.stock_symbol, // Exibe o ticker no campo
+        });
+        this.stockSearchResults = [];
+        this.showStockDropdown = false;
+        this.cdr.markForCheck();
+    }
+
+    /**
+     * Fechar dropdown de ações
+     */
+    closeStockDropdown(): void {
+        setTimeout(() => {
+            this.showStockDropdown = false;
+        }, 100);
     }
 }

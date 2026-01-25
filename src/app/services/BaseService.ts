@@ -4,7 +4,7 @@ import { CryptoService } from './Crypto';
 import { LoggerService } from './Logger';
 
 export interface ApiResponse<T = any> {
-    status: boolean;
+    status: string;
     message: string;
     data: T;
 }
@@ -99,7 +99,11 @@ export abstract class BaseService {
                     status: response.status, 
                     message: errorMessage 
                 });
-                throw new Error(errorMessage);
+                return {
+                    status: 'error',
+                    message: errorMessage,
+                    data: undefined as any
+                };
             }
             
             return data as ApiResponse<T>;
