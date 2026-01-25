@@ -138,19 +138,19 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Rendimento</div>
                                         <div class="investment-value" [ngClass]="getProfitClass(investment.profit || 0)">
-                                            {{ formatCurrency(+investment.profit || 0) }}
+                                            {{ formatCurrency(investment.profit == null ? 0 : +investment.profit) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Valor Atual</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(+investment.currentValue || +investment.amount) }}
+                                            {{ formatCurrency(investment.currentValue == null ? +investment.amount : +investment.currentValue) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
                                         <div class="investment-label">Taxa (a.a.)</div>
                                         <div class="investment-value">
-                                            {{ formatPercent(+investment.fixed_income?.yield_rate || 0) }}
+                                            {{ formatPercent(investment.fixed_income?.yield_rate == null ? 0 : +investment.fixed_income.yield_rate) }}
                                         </div>
                                     </div>
                                 </div>
@@ -223,7 +223,7 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Preço de Compra</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(+investment.variable_income?.unit_price || 0) }}
+                                            {{ formatCurrency(investment.variable_income?.unit_price == null ? 0 : +investment.variable_income.unit_price) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
@@ -235,7 +235,7 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Ganho/Perda</div>
                                         <div class="investment-value" [ngClass]="getProfitClass(investment.profit || 0)">
-                                            {{ formatCurrency(+investment.profit || 0) }}
+                                            {{ formatCurrency(investment.profit == null ? 0 : +investment.profit) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
