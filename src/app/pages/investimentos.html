@@ -150,7 +150,7 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Taxa (a.a.)</div>
                                         <div class="investment-value">
-                                            {{ formatPercent(investment.fixed_income?.yield_rate == null ? 0 : +investment.fixed_income.yield_rate) }}
+                                            {{ formatPercent((investment.fixed_income && investment.fixed_income.yield_rate != null) ? +investment.fixed_income.yield_rate : 0) }}
                                         </div>
                                     </div>
                                 </div>
@@ -223,7 +223,7 @@
                                     <div class="investment-info">
                                         <div class="investment-label">Preço de Compra</div>
                                         <div class="investment-value">
-                                            {{ formatCurrency(investment.variable_income?.unit_price == null ? 0 : +investment.variable_income.unit_price) }}
+                                            {{ formatCurrency((investment.variable_income && investment.variable_income.unit_price != null) ? +investment.variable_income.unit_price : 0) }}
                                         </div>
                                     </div>
                                     <div class="investment-info">
