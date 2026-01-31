@@ -8,7 +8,6 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class CryptoService {
-  // Chave base - em produção, isso deve vir de variáveis de ambiente
   private readonly KEY_PREFIX = 'planner_';
   
   /**
@@ -17,14 +16,11 @@ export class CryptoService {
    */
   encrypt(text: string): string {
     try {
-      // Adiciona salt aleatório
       const salt = this.generateSalt();
       const saltedText = salt + text;
       
-      // Codifica em Base64
       const encoded = btoa(encodeURIComponent(saltedText));
       
-      // Adiciona checksum simples
       const checksum = this.generateChecksum(encoded);
       
       return `${checksum}.${encoded}`;
@@ -38,18 +34,14 @@ export class CryptoService {
    */
   decrypt(encryptedText: string): string {
     try {
-      // Separa checksum do conteúdo
       const [checksum, encoded] = encryptedText.split('.');
       
-      // Valida checksum
       if (this.generateChecksum(encoded) !== checksum) {
         throw new Error('Dados corrompidos ou inválidos');
       }
       
-      // Decodifica
       const decoded = decodeURIComponent(atob(encoded));
       
-      // Remove salt (primeiros 8 caracteres)
       return decoded.substring(8);
     } catch (error) {
       throw new Error('Erro ao descriptografar dados');

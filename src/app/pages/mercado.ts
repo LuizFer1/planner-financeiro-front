@@ -4,23 +4,26 @@ import { Router, RouterModule } from '@angular/router';
 import { SidebarComponent } from '../shared/components/sidebar/sidebar';
 import { authService } from '../services/Auth';
 import { marketService } from '../services/Market';
+import { cryptoService } from '../services/CryptoService';
 import type { Stock } from '../services/Market';
+import type { Crypto } from '../services/CryptoService';
+import type { CryptoResponse} from '../services/CryptoService'
 
 interface MarketAsset {
   uuid: string;
-  stock_symbol: string;
-  stock_name: string;
+  stock_symbol?: string;
+  stock_name?: string;
   symbol: string;
   name: string;
   sector?: string;
   type: 'stock' | 'crypto' | 'index';
   current_price: string;
   previous_close?: string;
-  variation_percent: string;
+  variation_percent?: string;
   price: number;
   change: number;
   changePercent: number;
-  volume: number;
+  volume?: number;
   market_cap?: string;
   updated_at?: string;
   created_at?: string;
@@ -61,7 +64,6 @@ export class MercadoComponent implements OnInit {
   ngOnInit(): void {
     this.checkMarketStatus();
     this.loadStats();
-    this.loadIndices();
     this.loadStocks();
     this.loadCryptos();
     
@@ -77,8 +79,8 @@ export class MercadoComponent implements OnInit {
     const minutes = now.getMinutes();
     const currentTime = hours * 60 + minutes;
     
-    const marketOpen = 10 * 60; // 10:00 = 600 minutos
-    const marketClose = 17 * 60 + 55; // 17:55 = 1075 minutos
+    const marketOpen = 10 * 60;
+    const marketClose = 17 * 60 + 55;
     
     this.isMarketOpen = dayOfWeek >= 1 && dayOfWeek <= 5 && currentTime >= marketOpen && currentTime <= marketClose;
   }
@@ -120,53 +122,71 @@ export class MercadoComponent implements OnInit {
         this.cdr.markForCheck();
       })
       .catch(() => {
-        // Erro ao carregar ações
       })
       .finally(() => {
         this.stocksLoading = false;
       });
   }
-
-  loadIndices(): void {
-    this.indicesLoading = true;
-
-    setTimeout(() => {
-      this.indices = [];
-      this.indicesLoading = false;
-      this.cdr.markForCheck();
-    }, 500);
-  }
-
-  loadCryptos(page: number = 1): void {
+  loadCryptos(): void {
     this.cryptosLoading = true;
-    this.cryptosPage = page;
-
-    setTimeout(() => {
-      this.cryptos = [];
-      this.cryptosTotalPages = 0;
-      this.cryptosLoading = false;
-      this.cdr.markForCheck();
-    }, 500);
+    cryptoService.list()
+      .then((response: CryptoResponse) => {
+        const apiData = response.data;
+        const data = apiData || [];
+        
+        this.cryptos = data.map((crypto: Crypto) => this.mapAsset(crypto, 'crypto'));
+        this.cdr.markForCheck();
+      })
+      .catch(() => {
+      })
+      .finally(() => {
+        this.cryptosLoading = false;
+      });
   }
 
-  mapAsset(stock: any, defaultType: 'stock' | 'crypto' | 'index'): MarketAsset {
-    const symbol = stock.stock_symbol || stock.symbol || '';
-    const name = stock.stock_name || stock.name || '';
-    const price = parseFloat(stock.current_price || stock.price || '0');
-    const variationPercent = parseFloat(stock.variation_percent || stock.changePercent || '0');
-    const volume = parseInt(stock.volume || stock.trade_volume || '0', 10);
-    const changeValue = price * (variationPercent / 100);
+  mapAsset(asset: any, defaultType: 'stock' | 'crypto' | 'index'): MarketAsset {
+    const symbol = asset.stock_symbol || asset.symbol || '';
+    const name = asset.stock_name || asset.name || '';
+    
+    // Preço: current_price (stocks) ou latest_price (cryptos)
+    const rawPrice = asset.current_price ?? asset.latest_price ?? asset.price ?? '0';
+    const price = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice)) || 0;
+    
+    // Variação percentual: variation_percent, change_percent, price_change_percent, changePercent
+    const rawChangePercent = asset.variation_percent ?? 
+                            asset.change_percent ?? 
+                            asset.price_change_percent ?? 
+                            asset.changePercent ?? 
+                            '0';
+    const changePercent = typeof rawChangePercent === 'number' ? rawChangePercent : parseFloat(String(rawChangePercent)) || 0;
+    
+    // Variação absoluta: price_change (cryptos) ou calculada (stocks)
+    let change = 0;
+    if (asset.price_change !== undefined && asset.price_change !== null) {
+      change = typeof asset.price_change === 'number' ? asset.price_change : parseFloat(String(asset.price_change)) || 0;
+    } else {
+      // Cálculo: se temos o preço anterior em algum campo
+      const previousPrice = asset.previous_close || asset.previous_price;
+      if (previousPrice) {
+        const prev = typeof previousPrice === 'number' ? previousPrice : parseFloat(String(previousPrice));
+        change = price - prev;
+      } else {
+        change = price * (changePercent / 100);
+      }
+    }
+
+    const volume = parseInt(String(asset.volume || asset.trade_volume || '0'), 10) || 0;
 
     return {
-      ...stock,
-      uuid: stock.uuid,
+      ...asset,
+      uuid: asset.uuid,
       symbol,
       name,
       type: defaultType,
       price,
-      current_price: price,
-      change: changeValue,
-      changePercent: variationPercent,
+      current_price: String(price),
+      change,
+      changePercent,
       volume
     } as any;
   }
@@ -178,15 +198,6 @@ export class MercadoComponent implements OnInit {
   goToStocksPage(page: number): void {
     this.loadStocks(page);
   }
-
-  getCryptosPageNumbers(): number[] {
-    return this.getPageNumbers(this.cryptosPage, this.cryptosTotalPages);
-  }
-
-  goToCryptosPage(page: number): void {
-    this.loadCryptos(page);
-  }
-
   getPageNumbers(currentPage: number, totalPages: number): number[] {
     if (totalPages <= 1) return [];
     
