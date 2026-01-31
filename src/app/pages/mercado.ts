@@ -55,6 +55,7 @@ export class MercadoComponent implements OnInit {
   cryptos: MarketAsset[] = [];
   cryptosPage = 1;
   cryptosTotalPages = 1;
+  cryptosTotal = 0;
   cryptosPerPage = 5;
   cryptosLoading = false;
 
@@ -135,6 +136,7 @@ export class MercadoComponent implements OnInit {
         const data = apiData || [];
         
         this.cryptos = data.map((crypto: Crypto) => this.mapAsset(crypto, 'crypto'));
+        this.cryptosTotal = data.length;
         this.cdr.markForCheck();
       })
       .catch(() => {
@@ -152,11 +154,13 @@ export class MercadoComponent implements OnInit {
     const rawPrice = asset.current_price ?? asset.latest_price ?? asset.price ?? '0';
     const price = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice)) || 0;
     
-    // Variação percentual: variation_percent, change_percent, price_change_percent, changePercent
+    // Variação percentual: variation_percent, change_percent, price_change_percent, changePercent, variation, change
     const rawChangePercent = asset.variation_percent ?? 
                             asset.change_percent ?? 
                             asset.price_change_percent ?? 
                             asset.changePercent ?? 
+                            asset.variation ??
+                            asset.change ??
                             '0';
     const changePercent = typeof rawChangePercent === 'number' ? rawChangePercent : parseFloat(String(rawChangePercent)) || 0;
     
