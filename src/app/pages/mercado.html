@@ -34,10 +34,7 @@
         </div>
         <div class="card-content">
           <h3>Criptomoedas</h3>
-          <div class="development-badge">
-            <span class="badge-indicator"></span>
-            <span class="badge-text">Em desenvolvimento</span>
-          </div>
+          <p class="card-value">{{ cryptosTotal }}</p>
         </div>
       </div>
 
@@ -67,13 +64,13 @@
       <div class="section-header">
         <h2><i class="fa-solid fa-chart-line"></i> Índices</h2>
       </div>
-      
+
       <!-- Loading Overlay -->
       <div class="loading-overlay" *ngIf="indicesLoading">
         <div class="spinner"></div>
         <p>Carregando índices...</p>
       </div>
-      
+
       <!-- Mensagem de Em Desenvolvimento -->
       <div class="development-message" *ngIf="!indicesLoading && indices.length === 0">
         <div class="dev-icon">
@@ -82,7 +79,7 @@
         <h3>Em Desenvolvimento</h3>
         <p>A seção de índices estará disponível em breve.</p>
       </div>
-      
+
       <div class="assets-grid" [class.loading-blur]="indicesLoading" *ngIf="indices.length > 0">
         <div class="asset-card" *ngFor="let index of indices; trackBy: trackByUuid">
           <div class="asset-header">
@@ -92,25 +89,31 @@
             </button>
           </div>
           <h3 class="asset-name">{{ index.name }}</h3>
-          <div class="asset-price">{{ index.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}</div>
-          <div class="asset-change" 
+          <div class="asset-price">
+            {{ index.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+          </div>
+          <div
+            class="asset-change"
             [ngClass]="{
-              'positive': index.changePercent > 0,
-              'negative': index.changePercent < 0,
-              'neutral': index.changePercent === 0
-            }">
-            <i class="fa-solid" 
+              positive: index.changePercent > 0,
+              negative: index.changePercent < 0,
+              neutral: index.changePercent === 0,
+            }"
+          >
+            <i
+              class="fa-solid"
               [ngClass]="{
                 'fa-arrow-up': index.changePercent > 0,
                 'fa-arrow-down': index.changePercent < 0,
-                'fa-minus': index.changePercent === 0
-              }"></i>
-            R$ {{ index.change.toFixed(2) }} ({{
-              index.changePercent > 0 ? '+' : ''
+                'fa-minus': index.changePercent === 0,
+              }"
+            ></i>
+            R$ {{ index.change.toFixed(2) }} ({{ index.changePercent > 0 ? '+' : ''
             }}{{ index.changePercent.toFixed(2) }}%)
           </div>
           <div class="asset-volume" *ngIf="index.volume">
-            <i class="fa-solid fa-chart-column"></i> Volume: {{ index.volume.toLocaleString('pt-BR') }}
+            <i class="fa-solid fa-chart-column"></i> Volume:
+            {{ index.volume.toLocaleString('pt-BR') }}
           </div>
         </div>
       </div>
@@ -121,13 +124,13 @@
       <div class="section-header">
         <h2><i class="fa-solid fa-building-columns"></i> Ações</h2>
       </div>
-      
+
       <!-- Loading Overlay -->
       <div class="loading-overlay" *ngIf="stocksLoading">
         <div class="spinner"></div>
         <p>Carregando ações...</p>
       </div>
-      
+
       <div class="assets-grid" [class.loading-blur]="stocksLoading">
         <div class="asset-card" *ngFor="let stock of stocks; trackBy: trackByUuid">
           <div class="asset-header">
@@ -157,34 +160,35 @@
             }}{{ stock.changePercent.toFixed(2) }}%)
           </div>
           <div class="asset-volume" *ngIf="stock.volume">
-            <i class="fa-solid fa-chart-column"></i> Volume: {{ stock.volume.toLocaleString('pt-BR') }}
+            <i class="fa-solid fa-chart-column"></i> Volume:
+            {{ stock.volume.toLocaleString('pt-BR') }}
           </div>
         </div>
       </div>
-      
+
       <!-- Paginação para Ações -->
       <div class="pagination-wrapper" *ngIf="stocksTotalPages > 1">
         <div class="pagination-numbers">
-          <button 
-            class="page-btn prev-btn" 
-            (click)="goToStocksPage(stocksPage - 1)" 
+          <button
+            class="page-btn prev-btn"
+            (click)="goToStocksPage(stocksPage - 1)"
             [disabled]="stocksPage === 1"
           >
             <i class="fa-solid fa-chevron-left"></i>
           </button>
-          
-          <button 
-            *ngFor="let page of getStocksPageNumbers()" 
-            class="page-number-btn" 
+
+          <button
+            *ngFor="let page of getStocksPageNumbers()"
+            class="page-number-btn"
             [class.active]="page === stocksPage"
             (click)="goToStocksPage(page)"
           >
             {{ page }}
           </button>
-          
-          <button 
-            class="page-btn next-btn" 
-            (click)="goToStocksPage(stocksPage + 1)" 
+
+          <button
+            class="page-btn next-btn"
+            (click)="goToStocksPage(stocksPage + 1)"
             [disabled]="stocksPage === stocksTotalPages"
           >
             <i class="fa-solid fa-chevron-right"></i>
@@ -197,13 +201,13 @@
       <div class="section-header">
         <h2><i class="fa-brands fa-bitcoin"></i> Criptomoedas</h2>
       </div>
-      
+
       <!-- Loading Overlay -->
       <div class="loading-overlay" *ngIf="cryptosLoading">
         <div class="spinner"></div>
         <p>Carregando criptomoedas...</p>
       </div>
-      
+
       <!-- Mensagem de Em Desenvolvimento -->
       <div class="development-message" *ngIf="!cryptosLoading && cryptos.length === 0">
         <div class="dev-icon">
@@ -212,7 +216,7 @@
         <h3>Em Desenvolvimento</h3>
         <p>A seção de criptomoedas estará disponível em breve.</p>
       </div>
-      
+
       <div class="assets-grid" [class.loading-blur]="cryptosLoading" *ngIf="cryptos.length > 0">
         <div class="asset-card" *ngFor="let crypto of cryptos">
           <div class="asset-header">
@@ -242,38 +246,9 @@
             }}{{ crypto.changePercent.toFixed(2) }}%)
           </div>
           <div class="asset-volume" *ngIf="crypto.volume">
-            <i class="fa-solid fa-chart-column"></i> Volume: {{ crypto.volume.toLocaleString('pt-BR') }}
+            <i class="fa-solid fa-chart-column"></i> Volume:
+            {{ crypto.volume.toLocaleString('pt-BR') }}
           </div>
-        </div>
-      </div>
-      
-      <!-- Paginação para Criptomoedas -->
-      <div class="pagination-wrapper" *ngIf="cryptosTotalPages > 1">
-        <div class="pagination-numbers">
-          <button 
-            class="page-btn prev-btn" 
-            (click)="goToCryptosPage(cryptosPage - 1)" 
-            [disabled]="cryptosPage === 1"
-          >
-            <i class="fa-solid fa-chevron-left"></i>
-          </button>
-          
-          <button 
-            *ngFor="let page of getCryptosPageNumbers()" 
-            class="page-number-btn" 
-            [class.active]="page === cryptosPage"
-            (click)="goToCryptosPage(page)"
-          >
-            {{ page }}
-          </button>
-          
-          <button 
-            class="page-btn next-btn" 
-            (click)="goToCryptosPage(cryptosPage + 1)" 
-            [disabled]="cryptosPage === cryptosTotalPages"
-          >
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
         </div>
       </div>
     </section>
