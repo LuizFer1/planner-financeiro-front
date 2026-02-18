@@ -1,4 +1,3 @@
-import { inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { CryptoService } from './Crypto';
 import { LoggerService } from './Logger';
@@ -8,6 +7,11 @@ export interface ApiResponse<T = any> {
     message: string;
     data: T;
 }
+
+export type ApiError = Error & {
+    status?: number;
+    data?: unknown;
+};
 
 export abstract class BaseService {
     protected readonly apiUrl: string;
@@ -40,20 +44,22 @@ export abstract class BaseService {
 
     protected getToken(): string | null {
         if (typeof window !== 'undefined') {
-            return this.cryptoService.getSecureItem('auth_token');
+            return this.cryptoService.getSecureItem('auth_token', 'any');
         }
         return null;
     }
 
-    protected setToken(token: string): void {
+    protected setToken(token: string, remember: boolean = false): void {
         if (typeof window !== 'undefined') {
-            this.cryptoService.setSecureItem('auth_token', token);
+            const scope = remember ? 'local' : 'session';
+            this.cryptoService.removeSecureItem('auth_token', 'any');
+            this.cryptoService.setSecureItem('auth_token', token, scope);
         }
     }
 
     protected removeToken(): void {
         if (typeof window !== 'undefined') {
-            this.cryptoService.removeSecureItem('auth_token');
+            this.cryptoService.removeSecureItem('auth_token', 'any');
         }
     }
 
@@ -91,21 +97,34 @@ export abstract class BaseService {
 
     protected async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
         try {
-            const data = await response.json();
+            if (response.status === 204) {
+                return {
+                    status: 'success',
+                    message: '',
+                    data: undefined as T
+                };
+            }
+
+            const raw = await response.text();
+            const data = raw ? JSON.parse(raw) : null;
             
             if (!response.ok) {
-                const errorMessage = data.message || `Erro HTTP: ${response.status}`;
+                const errorMessage = data?.message || `Erro HTTP: ${response.status}`;
                 this.logger.error('Erro na resposta da API', { 
                     status: response.status, 
                     message: errorMessage 
                 });
-                return {
-                    status: 'error',
-                    message: errorMessage,
-                    data: undefined as any
-                };
+
+                const apiError: ApiError = new Error(errorMessage);
+                apiError.status = response.status;
+                apiError.data = data;
+                throw apiError;
             }
             
+            if (!data) {
+                throw new Error('Resposta vazia do servidor');
+            }
+
             return data as ApiResponse<T>;
         } catch (error) {
             if (error instanceof SyntaxError) {

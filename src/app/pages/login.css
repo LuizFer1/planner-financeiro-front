@@ -171,6 +171,19 @@
   display: block;
 }
 
+.remember-me {
+  margin-top: -4px;
+}
+
+.remember-me label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  cursor: pointer;
+}
+
 .forgot-password {
   text-align: left;
   margin-top: -8px;

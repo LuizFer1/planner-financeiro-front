@@ -42,7 +42,6 @@ export class LoginComponent {
     }
 
     this.loading = true;
-    console.log('[LOGIN] Iniciando login, loading:', this.loading);
 
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Tempo de requisição excedido. Tente novamente.')), 10000);
@@ -50,14 +49,12 @@ export class LoginComponent {
 
     Promise.race([authService.login(this.loginForm.value), timeoutPromise])
       .then(() => {
-        console.log('[LOGIN] Login bem-sucedido');
         this.toastService.success('Login realizado com sucesso!');
         setTimeout(() => {
           this.router.navigate(['/dashboard']);
         }, 500);
       })
       .catch(error => {
-        console.log('[LOGIN] Erro no login:', error);
         const errorMsg = error.message || 'Erro ao fazer login. Verifique suas credenciais.';
         this.toastService.error(errorMsg);
       })
@@ -65,7 +62,6 @@ export class LoginComponent {
         // Garante que o loading seja false e força detecção de mudanças
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('[LOGIN] Botão reativado, loading:', this.loading);
       });
   }
 }

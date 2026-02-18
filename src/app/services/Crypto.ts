@@ -9,6 +9,7 @@ import { Injectable } from '@angular/core';
 })
 export class CryptoService {
   private readonly KEY_PREFIX = 'planner_';
+  private readonly STORAGE_ORDER: Array<'session' | 'local'> = ['session', 'local'];
   
   /**
    * Criptografa uma string usando Base64 com ofuscação
@@ -76,10 +77,10 @@ export class CryptoService {
   /**
    * Armazena dados criptografados no localStorage
    */
-  setSecureItem(key: string, value: string): void {
+  setSecureItem(key: string, value: string, scope: 'local' | 'session' = 'local'): void {
     try {
       const encrypted = this.encrypt(value);
-      localStorage.setItem(this.KEY_PREFIX + key, encrypted);
+      this.getStorage(scope).setItem(this.KEY_PREFIX + key, encrypted);
     } catch (error) {
       throw new Error('Erro ao armazenar dados seguros');
     }
@@ -88,15 +89,24 @@ export class CryptoService {
   /**
    * Recupera e descriptografa dados do localStorage
    */
-  getSecureItem(key: string): string | null {
+  getSecureItem(key: string, scope: 'local' | 'session' | 'any' = 'any'): string | null {
     try {
-      const encrypted = localStorage.getItem(this.KEY_PREFIX + key);
-      if (!encrypted) return null;
-      
-      return this.decrypt(encrypted);
+      const scopes = scope === 'any' ? this.STORAGE_ORDER : [scope];
+
+      for (const currentScope of scopes) {
+        const storage = this.getStorage(currentScope);
+        const encrypted = storage.getItem(this.KEY_PREFIX + key);
+        if (!encrypted) {
+          continue;
+        }
+
+        return this.decrypt(encrypted);
+      }
+
+      return null;
     } catch (error) {
       // Se houver erro na descriptografia, remove o item corrompido
-      localStorage.removeItem(this.KEY_PREFIX + key);
+      this.removeSecureItem(key, 'any');
       return null;
     }
   }
@@ -104,19 +114,36 @@ export class CryptoService {
   /**
    * Remove item do localStorage
    */
-  removeSecureItem(key: string): void {
-    localStorage.removeItem(this.KEY_PREFIX + key);
+  removeSecureItem(key: string, scope: 'local' | 'session' | 'any' = 'any'): void {
+    if (scope === 'any') {
+      localStorage.removeItem(this.KEY_PREFIX + key);
+      sessionStorage.removeItem(this.KEY_PREFIX + key);
+      return;
+    }
+
+    this.getStorage(scope).removeItem(this.KEY_PREFIX + key);
   }
 
   /**
    * Limpa todos os itens do aplicativo do localStorage
    */
-  clearSecureStorage(): void {
-    const keys = Object.keys(localStorage);
+  clearSecureStorage(scope: 'local' | 'session' | 'any' = 'any'): void {
+    if (scope === 'any') {
+      this.clearSecureStorage('local');
+      this.clearSecureStorage('session');
+      return;
+    }
+
+    const storage = this.getStorage(scope);
+    const keys = Object.keys(storage);
     keys.forEach(key => {
       if (key.startsWith(this.KEY_PREFIX)) {
-        localStorage.removeItem(key);
+        storage.removeItem(key);
       }
     });
+  }
+
+  private getStorage(scope: 'local' | 'session'): Storage {
+    return scope === 'session' ? sessionStorage : localStorage;
   }
 }
