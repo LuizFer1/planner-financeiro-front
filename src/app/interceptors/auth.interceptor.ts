@@ -21,7 +21,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Clone a requisição e adiciona o token se existir
   let authReq = req;
-  if (token) {
+  if (token && !req.headers.has('Authorization')) {
     authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`

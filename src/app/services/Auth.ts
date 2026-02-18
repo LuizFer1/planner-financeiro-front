@@ -44,8 +44,9 @@ export class AuthService extends BaseService {
 
         const result = await this.handleResponse<AuthResponse>(response);
         
-        if (result.data.token) {
-            this.setToken(result.data.token);
+        if (result.data?.token) {
+            // Mantém comportamento de persistência após cadastro
+            this.setToken(result.data.token, true);
             this.logger.info('Usuário registrado com sucesso');
         }
         
@@ -68,8 +69,8 @@ export class AuthService extends BaseService {
 
         const result = await this.handleResponse<AuthResponse>(response);
         
-        if (result.data.token) {
-            this.setToken(result.data.token);
+        if (result.data?.token) {
+            this.setToken(result.data.token, Boolean(data.remember_me));
             this.logger.info('Login realizado com sucesso');
         }
         

@@ -66,7 +66,6 @@ export class InvestimentosComponent implements OnInit {
     this.isLoading = true;
     this.cdr.markForCheck();
 
-    console.log('Loading investments...');
     investmentService
       .list()
       .then(async (investmentsResponse) => {
@@ -240,7 +239,6 @@ export class InvestimentosComponent implements OnInit {
    * Abrir modal para novo investimento de renda fixa
    */
   openNewFixedIncome(): void {
-    console.log('renda fixa');
     this.investmentModal.open('rendafixa');
   }
 
@@ -274,7 +272,7 @@ export class InvestimentosComponent implements OnInit {
     investmentService
       .delete(investment.uuid)
       .then((response) => {
-        if (response.status) {
+        if (response.status === 'success') {
           this.toastService.success('Investimento removido com sucesso!');
           this.loadInvestments();
         } else {

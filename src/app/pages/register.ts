@@ -1,6 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { authService } from '../services/Auth';
 
@@ -24,7 +31,7 @@ export class RegisterComponent {
     this.registerForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, Validators.minLength(8), this.strongPasswordValidator]],
       confirmPassword: ['', Validators.required]
     }, {
       validator: this.passwordMatchValidator
@@ -36,10 +43,42 @@ export class RegisterComponent {
     const confirmPassword = form.get('confirmPassword');
     
     if (password && confirmPassword && password.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
+      const currentErrors = confirmPassword.errors || {};
+      confirmPassword.setErrors({ ...currentErrors, passwordMismatch: true });
       return { passwordMismatch: true };
     }
+
+    if (confirmPassword?.errors?.['passwordMismatch']) {
+      const { passwordMismatch, ...remainingErrors } = confirmPassword.errors;
+      confirmPassword.setErrors(Object.keys(remainingErrors).length ? remainingErrors : null);
+    }
+
     return null;
+  }
+
+  strongPasswordValidator(control: AbstractControl): ValidationErrors | null {
+    const value = String(control.value || '');
+    if (!value) {
+      return null;
+    }
+
+    const hasLowerCase = /[a-z]/.test(value);
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasNumber = /\d/.test(value);
+    const hasSpecial = /[^A-Za-z0-9]/.test(value);
+
+    if (hasLowerCase && hasUpperCase && hasNumber && hasSpecial) {
+      return null;
+    }
+
+    return {
+      weakPassword: {
+        hasLowerCase,
+        hasUpperCase,
+        hasNumber,
+        hasSpecial
+      }
+    };
   }
 
   // Getter para facilitar acesso aos campos do formulário

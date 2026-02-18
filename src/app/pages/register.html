@@ -55,11 +55,14 @@
           formControlName="password"
           class="form-control"
           [class.is-invalid]="submitted && f['password'].errors"
-          placeholder="Mínimo 6 caracteres"
+          placeholder="Mínimo 8, com maiúscula, minúscula, número e símbolo"
         />
         <div class="invalid-feedback" *ngIf="submitted && f['password'].errors">
           <span *ngIf="f['password'].errors['required']">Senha é obrigatória</span>
-          <span *ngIf="f['password'].errors['minlength']">Senha deve ter no mínimo 6 caracteres</span>
+          <span *ngIf="f['password'].errors['minlength']">Senha deve ter no mínimo 8 caracteres</span>
+          <span *ngIf="f['password'].errors['weakPassword']">
+            Senha fraca: use letra maiúscula, minúscula, número e símbolo
+          </span>
         </div>
       </div>
 
